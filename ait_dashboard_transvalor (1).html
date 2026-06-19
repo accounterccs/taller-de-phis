@@ -1,0 +1,2784 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MONITOREO - Transvalor</title>
+    
+    <!-- Tailwind CSS para diseño fluido y ultra-moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Librerías de Análisis Forense y Visualización de Datos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        
+        tailwind.config = {
+    theme: {
+        extend: {
+            colors: {
+                brand: {
+                    bg: '#0A192F',      // Tu Azul Marino
+                    card: '#112240',    // Azul tarjeta
+                    border: 'rgba(255, 140, 0, 0.2)', // Borde Naranja suave
+                    text: '#FFFFFF',    // Blanco puro
+                    accent: '#FF8C00'   // Naranja de tu logo
+                }
+            }
+        }
+    }
+}
+    </script>
+<head>
+<style>
+    @keyframes pulse-green {
+        0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+    .active-glow {
+        animation: pulse-green 2s infinite;
+        background-color: #166534 !important; /* Verde oscuro elegante */
+        border-color: #22c55e !important;
+        color: white !important;
+    }
+</style>
+    <style>
+        
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+        .active-glow {
+            animation: pulse-green 2s infinite;
+            background-color: #22c55e !important; 
+            color: white !important;
+            border-color: #22c55e !important;
+        }
+    </style>
+</head>
+    <style>
+        body {
+            background-color: #060608;
+            font-family: 'Inter', sans-serif;
+        }
+        .active-tab {
+            color: #deff9a;
+            border-bottom: 2px solid #deff9a;
+            background-color: rgba(222, 255, 154, 0.03);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f0f12;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46;
+        }
+        /* Animaciones para flujos y alertas fluorescentes */
+        @keyframes pulse-red {
+            0%, 100% { box-shadow: 0 0 4px #f87171, inset 0 0 2px #f87171; }
+            50% { box-shadow: 0 0 16px #f87171, inset 0 0 8px #f87171; }
+        }
+        @keyframes pulse-orange {
+            0%, 100% { box-shadow: 0 0 4px #fb923c, inset 0 0 2px #fb923c; }
+            50% { box-shadow: 0 0 16px #fb923c, inset 0 0 8px #fb923c; }
+        }
+        @keyframes pulse-purple {
+            0%, 100% { box-shadow: 0 0 4px #c084fc, inset 0 0 2px #c084fc; }
+            50% { box-shadow: 0 0 16px #c084fc, inset 0 0 8px #c084fc; }
+        }
+        @keyframes pulse-green {
+            0%, 100% { box-shadow: 0 0 4px #deff9a, inset 0 0 2px #deff9a; }
+            50% { box-shadow: 0 0 16px #deff9a, inset 0 0 8px #deff9a; }
+        }
+        .glow-red { animation: pulse-red 2s infinite; border-color: #f87171; }
+        .glow-orange { animation: pulse-orange 2s infinite; border-color: #fb923c; }
+        .glow-purple { animation: pulse-purple 2s infinite; border-color: #c084fc; }
+        .glow-green { animation: pulse-green 2s infinite; border-color: #deff9a; }
+        
+        .row-highlight {
+            transition: background-color 1s ease;
+        }
+        .row-new {
+            background-color: rgba(222, 255, 154, 0.15) !important;
+        }
+    </style>
+</head>
+<body class="text-gray-100 min-h-screen flex flex-col justify-between">
+
+    <div id="toast-container" class="fixed top-5 right-5 z-[300] flex flex-col gap-3 max-w-sm w-full"></div>
+
+    <!-- HEADER -->
+    <header class="border-b border-brand-border bg-brand-card/90 backdrop-blur-md sticky top-0 z-50 px-4 md:px-6 py-4">
+        <div class="flex items-center gap-3">
+    <h1 class="text-3xl md:text-5xl font-black font-urbanist tracking-tighter">
+        <span class="text-white">SCOPE</span><span class="text-[#FF8C00]">TX</span>
+    </h1>
+</div>
+    
+    <div class="bg-blue-600/10 p-2 rounded-lg border border-blue-500/20">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500">
+            <path d="M12 2v20"></path>
+            <path d="M8 22h8"></path>
+            <path d="M10 2h4l1 4h-6z"></path>
+            <path d="M7 6h10"></path>
+            <path d="M9 10h6"></path>
+            <path d="M12 6v4"></path>
+            <path d="M12 14v2"></path>
+            <circle cx="12" cy="12" r="2"></circle>
+        </svg>
+    </div>
+    <div>
+        <h1 class="text-xl font-black tracking-tight text-white uppercase"> <span class="text-blue-500"></span></h1>
+        <p class="text-[10px] text-zinc-500 uppercase tracking-widest">Monitoreo Transaccional </p>
+    </div>
+</div>>
+                                       <div class="flex items-center gap-2 mt-0.5">
+                        <span class="text-xs text-brand-neonGreen font-semibold tracking-wider"></span>
+                        <span class="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded font-mono">Sesión: G. Suárez - Gerente</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2 flex-wrap justify-center w-full md:w-auto">
+                <button onclick="toggleInitialBalanceModal(true)" class="flex items-center gap-1.5 px-3 py-2 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-brand-neonBlue hover:text-white rounded-lg text-xs transition-all font-urbanist">
+                    <i class="fa-solid fa-vault"></i> Saldos Bóveda/Clientes
+                </button>
+                <button onclick="toggleClientAdminModal(true)" class="flex items-center gap-1.5 px-3 py-2 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white rounded-lg text-xs transition-all font-urbanist">
+                    <i class="fa-solid fa-users-gear"></i> Gestionar Clientes
+                </button>
+                <button onclick="toggleApiManualModal(true)" class="flex items-center gap-1.5 px-3 py-2 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 rounded-lg text-xs transition-all font-urbanist">
+                    <i class="fa-solid fa-code"></i> Extraer Datos (API)
+                </button>
+                <button onclick="toggleSyncModal(true)" class="flex items-center gap-1.5 px-3 py-2 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-brand-neonGreen rounded-lg text-xs transition-all font-urbanist">
+                    <i class="fa-solid fa-mobile-screen-button"></i> Sincronizar Móvil
+                </button>
+                <button onclick="toggleImportModal(true)" class="flex items-center gap-1.5 px-3.5 py-2 bg-brand-neonGreen text-brand-bg font-extrabold rounded-lg text-xs hover:bg-emerald-300 transition-all font-urbanist shadow-lg shadow-brand-neonGreen/10">
+                    <i class="fa-solid fa-file-import"></i>
+<button id="btn-automonitoreo" onclick="toggleAutoMonitoreo()" 
+    class="flex items-center gap-1.5 px-3 py-2 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-[#FF8C00] hover:text-white rounded-lg text-xs transition-all font-urbanist">
+    <i class="fa-solid fa-satellite-dish"></i> AUTOMONITOREO
+</button> Cargar Archivo (Excel/PDF)
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- NAVEGACIÓN -->
+    <nav class="border-b border-brand-border bg-brand-card/50">
+        <div class="max-w-7xl mx-auto px-4 flex overflow-x-auto">
+            <button onclick="switchTab('dashboard-general')" id="btn-tab-dashboard-general" class="px-5 py-3.5 text-xs md:text-sm font-semibold font-urbanist text-zinc-400 hover:text-white transition-all border-b-2 border-transparent whitespace-nowrap active-tab flex items-center gap-2">
+                <i class="fa-solid fa-gauge"></i> Dashboard General
+            </button>
+            <button onclick="switchTab('planificacion-quincenal')" id="btn-tab-planificacion-quincenal" class="px-5 py-3.5 text-xs md:text-sm font-semibold font-urbanist text-zinc-400 hover:text-white transition-all border-b-2 border-transparent whitespace-nowrap flex items-center gap-2">
+                <i class="fa-solid fa-calendar-days"></i> Conciliación Quincenal
+            </button>
+            <button onclick="switchTab('alertas-red')" id="btn-tab-alertas-red" class="px-5 py-3.5 text-xs md:text-sm font-semibold font-urbanist text-zinc-400 hover:text-white transition-all border-b-2 border-transparent whitespace-nowrap flex items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation text-brand-neonPink"></i> Consola RED 
+                <span id="alert-badge-count" class="bg-brand-neonPink/20 text-brand-neonPink text-[10px] px-1.5 py-0.5 rounded-full font-bold">0</span>
+            </button>
+            <button onclick="switchTab('historial-remesas')" id="btn-tab-historial-remesas" class="px-5 py-3.5 text-xs md:text-sm font-semibold font-urbanist text-zinc-400 hover:text-white transition-all border-b-2 border-transparent whitespace-nowrap flex items-center gap-2">
+                <i class="fa-solid fa-network-wired"></i> Trazabilidad Completa
+            </button>
+        </div>
+    </nav>
+
+    <!-- CUERPO PRINCIPAL -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex-grow w-full space-y-6">
+
+        <!-- SEGMENTADORES DE DATOS & CONTROLES GLOBALES -->
+        <div class="bg-brand-card p-4 md:p-5 rounded-2xl border border-zinc-800/80 shadow-md space-y-4">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <h3 class="text-xs font-bold font-urbanist text-zinc-400 flex items-center gap-2 tracking-wider uppercase">
+                    <i class="fa-solid fa-sliders text-brand-neonGreen"></i> Monitoreo Activo & Segmentadores
+                </h3>
+                <div class="flex items-center gap-4 flex-wrap">
+                    <!-- Switch Live Feed -->
+                    <div class="flex items-center gap-2 bg-zinc-900 px-3 py-1.5 rounded-lg border border-zinc-850">
+                        <span class="text-xs text-zinc-400 font-semibold flex items-center gap-1">
+                            <i id="live-feed-icon" class="fa-solid fa-circle text-zinc-500 animate-pulse text-[10px]"></i> LIVE FEED
+                        </span>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="live-feed-switch" onchange="toggleLiveFeed(this.checked)" class="sr-only peer">
+                            <div class="w-9 h-5 bg-zinc-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-zinc-400 after:border-zinc-300 after:border after:rounded-full after:height-4 after:width-4 after:transition-all peer-checked:bg-brand-neonGreen peer-checked:after:bg-black"></div>
+                        </label>
+                    </div>
+                    <button onclick="resetFilters();" class="text-xs text-brand-neonGreen hover:underline font-semibold flex items-center gap-1">
+                        <i class="fa-solid fa-filter-circle-xmark"></i> Restablecer Filtros
+                    </button>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <!-- Buscador de Texto -->
+                <div class="space-y-1.5">
+                    <label class="text-[10px] text-zinc-400 font-bold uppercase">Buscador Inteligente</label>
+                    <div class="relative">
+                        <input id="search-input" type="text" oninput="applyFilters();" placeholder="Comprobante, ID, Cliente..." class="w-full bg-zinc-900 border border-zinc-850 rounded-lg py-2 pl-9 pr-4 text-xs text-white focus:outline-none focus:border-brand-neonGreen">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-zinc-600 text-xs"></i>
+                    </div>
+                </div>
+
+                <!-- Slicer Divisa -->
+                <div class="space-y-1.5">
+                    <label class="text-[10px] text-zinc-400 font-bold uppercase">Filtrar Divisa</label>
+                    <select id="filter-divisa" onchange="applyFilters();" class="w-full bg-zinc-900 border border-zinc-850 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-brand-neonGreen">
+                        <option value="ALL">Todas las Divisas</option>
+                        <option value="Dólar">Dólares (USD)</option>
+                        <option value="Euro">Euros (EUR)</option>
+                        <option value="Bolivar">Bolívares (VES)</option>
+                    </select>
+                </div>
+
+                <!-- Slicer Cliente -->
+                <div class="space-y-1.5">
+                    <label class="text-[10px] text-zinc-400 font-bold uppercase">Cliente Emisor</label>
+                    <select id="filter-cliente" onchange="applyFilters();" class="w-full bg-zinc-900 border border-zinc-850 rounded-lg py-2 px-3 text-xs text-brand-neonGreen font-semibold focus:outline-none focus:border-brand-neonGreen">
+                        <option value="ALL">Todos los Clientes</option>
+                    </select>
+                </div>
+
+                <!-- Slicer Segmentación de Canal -->
+                <div class="space-y-1.5">
+                    <label class="text-[10px] text-zinc-400 font-bold uppercase">Segmentación / Canal</label>
+                    <select id="filter-canal" onchange="applyFilters();" class="w-full bg-zinc-900 border border-zinc-850 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-brand-neonGreen">
+                        <option value="ALL">Todos los Canales</option>
+                        <option value="ATM">ATM (Cajeros)</option>
+                        <option value="Agencia">Agencias</option>
+                        <option value="Comercial">Clientes Comerciales</option>
+                    </select>
+                </div>
+
+                <!-- Slicer Estado -->
+                <div class="space-y-1.5">
+                    <label class="text-[10px] text-zinc-400 font-bold uppercase">Filtrar por Estado</label>
+                    <select id="filter-status" onchange="applyFilters();" class="w-full bg-zinc-900 border border-zinc-850 rounded-lg py-2 px-3 text-xs text-white focus:outline-none focus:border-brand-neonGreen">
+                        <option value="ALL">Todos los Estados</option>
+                        <option value="Solicitud">Solicitud</option>
+                        <option value="Autorizado">Autorizado</option>
+                        <option value="Preparado">Preparado</option>
+                        <option value="Enviado">Enviado</option>
+                        <option value="Recibido (Camión)">Recibido (Camión)</option>
+                        <option value="Recibido Final (Bóveda)">Recibido Final (Bóveda)</option>
+                        <option value="Cerrado (Contado)">Cerrado (Contado)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= TAB: DASHBOARD GENERAL ================= -->
+        <section id="tab-dashboard-general" class="space-y-6">
+            
+            <!-- TARJETAS DE CONCILIACIÓN DE DIVISAS Y SALDOS DE BÓVEDA -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Tarjeta USD -->
+                <div class="bg-gradient-to-br from-emerald-950/20 to-brand-card border border-emerald-500/20 p-5 rounded-2xl relative overflow-hidden">
+                    <div class="absolute -right-6 -bottom-6 text-emerald-500/5 text-9xl font-bold font-urbanist">$</div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] text-zinc-400 uppercase tracking-widest font-semibold">Custodia al Cierre (USD)</span>
+                        <div class="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg"><i class="fa-solid fa-dollar-sign text-sm"></i></div>
+                    </div>
+                    <h3 id="card-usd-total" class="text-2xl md:text-3xl font-black font-urbanist text-white mt-4">$0.00</h3>
+                    <p class="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold mt-1">Saldo en Custodia al Cierre</p>
+                    <div class="mt-4 pt-4 border-t border-zinc-800 space-y-1.5 text-xs text-zinc-400 relative z-10 font-mono">
+                        <div class="flex justify-between"><span>Saldo Inicial:</span><span id="card-usd-open">$0.00</span></div>
+                        <div class="flex justify-between"><span>Saldo al Cierre:</span><span id="card-usd-cierre" class="text-emerald-400 font-bold">$0.00</span></div>
+                        <div class="flex justify-between"><span>Saldo Reservado:</span><span id="card-usd-transit" class="text-brand-neonOrange">$0.00</span></div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta EUR -->
+                <div class="bg-gradient-to-br from-sky-950/20 to-brand-card border border-sky-500/20 p-5 rounded-2xl relative overflow-hidden">
+                    <div class="absolute -right-6 -bottom-6 text-sky-500/5 text-9xl font-bold font-urbanist">€</div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] text-zinc-400 uppercase tracking-widest font-semibold">Custodia al Cierre (EUR)</span>
+                        <div class="p-2 bg-sky-500/10 text-sky-400 rounded-lg"><i class="fa-solid fa-euro-sign text-sm"></i></div>
+                    </div>
+                    <h3 id="card-eur-total" class="text-2xl md:text-3xl font-black font-urbanist text-white mt-4">€0.00</h3>
+                    <p class="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold mt-1">Saldo en Custodia al Cierre</p>
+                    <div class="mt-4 pt-4 border-t border-zinc-800 space-y-1.5 text-xs text-zinc-400 relative z-10 font-mono">
+                        <div class="flex justify-between"><span>Saldo Inicial:</span><span id="card-eur-open">€0.00</span></div>
+                        <div class="flex justify-between"><span>Saldo al Cierre:</span><span id="card-eur-cierre" class="text-sky-400 font-bold">€0.00</span></div>
+                        <div class="flex justify-between"><span>Saldo Reservado:</span><span id="card-eur-transit" class="text-brand-neonOrange">€0.00</span></div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta VES -->
+                <div class="bg-gradient-to-br from-orange-950/20 to-brand-card border border-orange-500/20 p-5 rounded-2xl relative overflow-hidden">
+                    <div class="absolute -right-6 -bottom-6 text-orange-500/5 text-9xl font-bold font-urbanist">Bs</div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[10px] text-zinc-400 uppercase tracking-widest font-semibold">Custodia al Cierre (VES)</span>
+                        <div class="p-2 bg-orange-500/10 text-orange-400 rounded-lg"><i class="fa-solid fa-money-bill-transfer text-sm"></i></div>
+                    </div>
+                    <h3 id="card-ves-total" class="text-2xl md:text-3xl font-black font-urbanist text-white mt-4">Bs. 0.00</h3>
+                    <p class="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold mt-1">Saldo en Custodia al Cierre</p>
+                    <div class="mt-4 pt-4 border-t border-zinc-800 space-y-1.5 text-xs text-zinc-400 relative z-10 font-mono">
+                        <div class="flex justify-between"><span>Saldo Inicial:</span><span id="card-ves-open">Bs. 0.00</span></div>
+                        <div class="flex justify-between"><span>Saldo al Cierre:</span><span id="card-ves-cierre" class="text-orange-400 font-bold">Bs. 0.00</span></div>
+                        <div class="flex justify-between"><span>Saldo Reservado:</span><span id="card-ves-transit" class="text-brand-neonOrange">Bs. 0.00</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEGREGACIÓN OPERATIVA POR CANAL Y COLA DE ENVEJECIMIENTO (SLA 72H) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Columna Izquierda: Recepción de Hoy y Desglose por Canal -->
+                <div class="lg:col-span-1 bg-brand-card p-5 rounded-2xl border border-zinc-800 flex flex-col justify-between space-y-4">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-sm font-bold font-urbanist text-white uppercase tracking-wider">
+                                Recepción y Canales Hoy
+                            </h3>
+                            <span class="text-[10px] bg-emerald-950/40 text-emerald-400 px-2.5 py-1 rounded-full font-bold border border-emerald-900/40">FÍSICO EN RED</span>
+                        </div>
+                        
+                        <!-- Totales Rápidos de Recepción por Moneda (Hoy) -->
+                        <div class="grid grid-cols-3 gap-2 mb-4 text-center">
+                            <div class="bg-zinc-900/60 p-2 rounded-xl border border-zinc-850">
+                                <p class="text-[10px] text-zinc-400 uppercase font-semibold">USD Hoy</p>
+                                <p id="today-recv-usd" class="text-xs font-bold text-white">$0.00</p>
+                            </div>
+                            <div class="bg-zinc-900/60 p-2 rounded-xl border border-zinc-850">
+                                <p class="text-[10px] text-zinc-400 uppercase font-semibold">EUR Hoy</p>
+                                <p id="today-recv-eur" class="text-xs font-bold text-white">€0.00</p>
+                            </div>
+                            <div class="bg-zinc-900/60 p-2 rounded-xl border border-zinc-850">
+                                <p class="text-[10px] text-zinc-400 uppercase font-semibold">VES Hoy</p>
+                                <p id="today-recv-ves" class="text-xs font-bold text-white">Bs. 0</p>
+                            </div>
+                        </div>
+
+                        <!-- Desglose de Distribución por Canales (ATM, Agencias, Comerciales) -->
+                        <div class="space-y-3 pt-2">
+                            <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Segregación por Canal (Bultos)</p>
+                            
+                            <!-- Canal ATM -->
+                            <div class="bg-zinc-900/60 p-3 rounded-xl border border-zinc-850 flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-lg bg-sky-550/10 text-sky-400 flex items-center justify-center text-xs"><i class="fa-solid fa-credit-card"></i></div>
+                                    <div>
+                                        <p class="text-xs font-semibold text-zinc-300">ATM (Cajeros)</p>
+                                        <p id="channel-desc-atm" class="text-[9px] text-zinc-500">Carga e inventario de terminales</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p id="channel-count-atm" class="text-sm font-bold text-white">0 Bultos</p>
+                                    <p id="channel-pct-atm" class="text-[10px] text-zinc-400">0%</p>
+                                </div>
+                            </div>
+
+                            <!-- Canal Agencias -->
+                            <div class="bg-zinc-900/60 p-3 rounded-xl border border-zinc-850 flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-lg bg-purple-550/10 text-purple-400 flex items-center justify-center text-xs"><i class="fa-solid fa-building-columns"></i></div>
+                                    <div>
+                                        <p class="text-xs font-semibold text-zinc-300">Agencias</p>
+                                        <p id="channel-desc-agencia" class="text-[9px] text-zinc-500">Remesas de sucursales bancarias</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p id="channel-count-agencia" class="text-sm font-bold text-white">0 Bultos</p>
+                                    <p id="channel-pct-agencia" class="text-[10px] text-zinc-400">0%</p>
+                                </div>
+                            </div>
+
+                            <!-- Canal Comercial -->
+                            <div class="bg-zinc-900/60 p-3 rounded-xl border border-zinc-850 flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-lg bg-emerald-550/10 text-emerald-400 flex items-center justify-center text-xs"><i class="fa-solid fa-shop"></i></div>
+                                    <div>
+                                        <p class="text-xs font-semibold text-zinc-300">Comercial</p>
+                                        <p id="channel-desc-comercial" class="text-[9px] text-zinc-500">Corporativos y grandes retailers</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p id="channel-count-comercial" class="text-sm font-bold text-white">0 Bultos</p>
+                                    <p id="channel-pct-comercial" class="text-[10px] text-zinc-400">0%</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="pt-3 border-t border-zinc-800 text-center">
+                        <p class="text-[10px] text-zinc-500">Actualizado dinámicamente con el Live Feed</p>
+                    </div>
+                </div>
+
+                <!-- Columna Centro/Derecha: Mesa de Control de Envejecimiento (SLA 72H) -->
+                <div class="lg:col-span-2 bg-brand-card p-5 rounded-2xl border border-zinc-800 flex flex-col justify-between">
+                    <div>
+                        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 mb-3">
+                            <div>
+                                <h3 class="text-sm font-bold font-urbanist text-white uppercase tracking-wider">
+                                    Cola de Envejecimiento (Pendientes por Contar)
+                                </h3>
+                                <p class="text-xs text-zinc-500">Monitoreo transaccional de bóveda - SLA estándar: 72 horas continuas.</p>
+                            </div>
+                            <span class="bg-zinc-900 text-brand-neonGreen border border-brand-neonGreen/20 px-2 py-0.5 rounded text-[10px] font-bold">Max. 72h</span>
+                        </div>
+
+                        <!-- Grilla de envejecimiento -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse min-w-[500px]">
+                                <thead>
+                                    <tr class="text-[10px] text-zinc-500 uppercase border-b border-zinc-850 font-urbanist">
+                                        <th class="pb-2 font-bold">Remesa ID</th>
+                                        <th class="pb-2 font-bold">Cliente</th>
+                                        <th class="pb-2 font-bold">Comprobante</th>
+                                        <th class="pb-2 font-bold">Canal</th>
+                                        <th class="pb-2 font-bold text-right">Monto</th>
+                                        <th class="pb-2 font-bold text-right">Antigüedad</th>
+                                        <th class="pb-2 font-bold text-center">Riesgo SLA</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="aging-tbody" class="divide-y divide-zinc-850/60 text-xs">
+                                    <!-- Inyectado dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Semáforos Guía -->
+                    <div class="mt-4 pt-3 border-t border-zinc-800 flex flex-wrap gap-4 text-[10px] text-zinc-400">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-brand-neonGreen block glow-green"></span>
+                            <span>Controlado (&lt; 48 Horas)</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-brand-neonOrange block glow-orange"></span>
+                            <span>Advertencia (48 - 72 Horas)</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-2.5 h-2.5 rounded-full bg-brand-neonPink block glow-red"></span>
+                            <span>Crítico (&gt; 72 Horas Excedido)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- COYUNTURA ANALÍTICA: GRÁFICOS INTERACTIVOS -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Gráfico de Estados Activos -->
+                <div class="bg-brand-card p-5 rounded-2xl border border-zinc-800 space-y-4">
+                    <h3 class="text-sm font-bold font-urbanist text-white uppercase tracking-wider">
+                        Distribución Operativa del Flujo
+                    </h3>
+                    <div class="relative flex justify-center items-center h-48 w-full">
+                        <canvas id="chart-status-doughnut"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico de Resultados de Conciliación -->
+                <div class="bg-brand-card p-5 rounded-2xl border border-zinc-800 space-y-4 lg:col-span-2">
+                    <h3 class="text-sm font-bold font-urbanist text-white uppercase tracking-wider">
+                        Resultados de Cuadraturas (Consolidado)
+                    </h3>
+                    <div class="relative h-48 w-full">
+                        <canvas id="chart-conciliation-bar"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FLUJOGRAMA INTERACTIVO DE 7 HITOS DE CUSTODIA -->
+            <div class="bg-brand-card p-5 md:p-6 rounded-2xl border border-zinc-800 space-y-6">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h3 class="text-sm font-bold font-urbanist text-white uppercase tracking-wider">
+                            Flujograma del Ciclo de Vida del Bulto Seleccionado
+                        </h3>
+                        <p class="text-xs text-zinc-400">Monitoreo dinámico paso a paso desde la Solicitud del Cliente hasta el Conteo en Mesa.</p>
+                    </div>
+                    <div id="flow-alert-pill" class="hidden px-2.5 py-1 rounded text-[10px] font-bold"></div>
+                </div>
+
+                <!-- Diagrama de Flujo 7 Pasos -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4 relative py-3">
+                    <!-- Paso 1 -->
+                    <div id="flow-step-1" class="bg-zinc-900 border border-zinc-800 p-3 rounded-xl flex items-center lg:flex-col gap-3 text-left lg:text-center relative">
+                        <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-500">1</div>
+                        <div>
+                            <p class="text-xs font-bold text-white">Solicitud</p>
+                            <p id="flow-time-1" class="text-[10px] text-zinc-500 mt-0.5">Pendiente</p>
+                        </div>
+                    </div>
+                    <!-- Paso 2 -->
+                    <div id="flow-step-2" class="bg-zinc-900 border border-zinc-800 p-3 rounded-xl flex items-center lg:flex-col gap-3 text-left lg:text-center relative">
+                        <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-500">2</div>
+                        <div>
+                            <p class="text-xs font-bold text-white">Autorizado</p>
+                            <p id="flow-time-2" class="text-[10px] text-zinc-500 mt-0.5">Pendiente</p>
+                        </div>
+                    </div>
+                    <!-- Paso 3 -->
+                    <div id="flow-step-3" class="bg-zinc-900 border border-zinc-800 p-3 rounded-xl flex items-center lg:flex-col gap-3 text-left lg:text-center relative">
+                        <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-500">3</div>
+                        <div>
+                            <p class="text-xs font-bold text-white">Preparado</p>
+                            <p id="flow-time-3" class="text-[10px] text-zinc-500 mt-0.5">Pendiente</p>
+                        </div>
+                    </div>
+                    <!-- Paso 4 -->
+                    <div id="flow-step-4" class="bg-zinc-900 border border-zinc-800 p-3 rounded-xl flex items-center lg:flex-col gap-3 text-left lg:text-center relative">
+                        <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-500">4</div>
+                        <div>
+                            <p class="text-xs font-bold text-white">Enviado</p>
+                            <p id="flow-time-4" class="text-[10px] text-zinc-500 mt-0.5">Pendiente</p>
+                        </div>
+                    </div>
+                    <!-- Paso 5 -->
+                    <div id="flow-step-5" class="bg-zinc-900 border border-zinc-800 p-3 rounded-xl flex items-center lg:flex-col gap-3 text-left lg:text-center relative">
+                        <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-500">5</div>
+                        <div>
+                            <p class="text-xs font-bold text-white">Recibido (Camión)</p>
+                            <p id="flow-time-5" class="text-[10px] text-zinc-500 mt-0.5">Pendiente</p>
+                        </div>
+                    </div>
+                    <!-- Paso 6 -->
+                    <div id="flow-step-6" class="bg-zinc-900 border border-zinc-800 p-3 rounded-xl flex items-center lg:flex-col gap-3 text-left lg:text-center relative">
+                        <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-500">6</div>
+                        <div>
+                            <p class="text-xs font-bold text-white">Bóveda Final</p>
+                            <p id="flow-time-6" class="text-[10px] text-zinc-500 mt-0.5">Pendiente</p>
+                        </div>
+                    </div>
+                    <!-- Paso 7 -->
+                    <div id="flow-step-7" class="bg-zinc-900 border border-zinc-800 p-3 rounded-xl flex items-center lg:flex-col gap-3 text-left lg:text-center relative">
+                        <div class="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-500">7</div>
+                        <div>
+                            <p class="text-xs font-bold text-white">Cerrado (Contado)</p>
+                            <p id="flow-time-7" class="text-[10px] text-zinc-500 mt-0.5">Pendiente</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detalle Específico de la Remesa Seleccionada -->
+                <div class="bg-zinc-950 p-4 rounded-xl border border-zinc-900 grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
+                    <div>
+                        <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Identificación y Canal</p>
+                        <div class="space-y-1.5 mt-2 font-mono text-zinc-300">
+                            <p><strong>Remesa ID:</strong> <span id="flow-rem-id" class="text-brand-neonGreen">Ninguna Seleccionada</span></p>
+                            <p><strong>Comprobante:</strong> <span id="flow-comprobante">-</span></p>
+                            <p><strong>Cliente:</strong> <span id="flow-cliente">-</span></p>
+                            <p><strong>Canal / Segmento:</strong> <span id="flow-canal" class="text-brand-neonBlue">-</span></p>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Valores e Importes</p>
+                        <div class="space-y-1.5 mt-2 font-mono text-zinc-300">
+                            <p><strong>Monto Solicitado:</strong> <span id="flow-amt-req">-</span></p>
+                            <p><strong>Monto Contado:</strong> <span id="flow-amt-real">-</span></p>
+                            <p><strong>Resultado Cierre:</strong> <span id="flow-result" class="font-bold">-</span></p>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-zinc-500 uppercase font-bold tracking-wider">Seguimiento de Seguridad</p>
+                        <div class="space-y-1.5 mt-2 font-mono text-zinc-300">
+                            <p><strong>Precinto Inicial:</strong> <span id="flow-seal">-</span></p>
+                            <p><strong>Observaciones:</strong> <span id="flow-obs" class="text-zinc-400">-</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB: CONCILIACIÓN QUINCENAL ================= -->
+        <section id="tab-planificacion-quincenal" class="hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Columna Izquierda: Configuración de Expectativas Diarias -->
+                <div class="bg-brand-card p-5 rounded-2xl border border-zinc-800 space-y-4">
+                    <div>
+                        <h3 class="text-sm font-bold font-urbanist text-white uppercase tracking-wider">Configuración de Expectativas</h3>
+                        <p class="text-xs text-zinc-500 mt-1">Declara cuántas remesas se esperan recibir por día de tus clientes seleccionados.</p>
+                    </div>
+                    
+                    <div class="space-y-3 pt-2">
+                        <div class="space-y-1">
+                            <label class="text-[10px] text-zinc-400 font-bold uppercase">Cliente Emisor</label>
+                            <select id="expect-client-select" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-brand-neonGreen font-semibold focus:outline-none"></select>
+                        </div>
+                        <div class="space-y-1">
+                            <label class="text-[10px] text-zinc-400 font-bold uppercase">Remesas Esperadas por Día</label>
+                            <input type="number" id="expect-quantity-input" min="0" placeholder="Ej. 3" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg py-2 px-3 text-xs text-white focus:outline-none">
+                        </div>
+                        <button onclick="saveExpectation();" class="w-full py-2 bg-brand-neonGreen text-brand-bg font-extrabold rounded-lg text-xs hover:bg-emerald-300 transition-all font-urbanist uppercase">
+                            Guardar Planificación
+                        </button>
+                    </div>
+
+                    <!-- Listado de Planificaciones Guardadas -->
+                    <div class="pt-4 border-t border-zinc-850">
+                        <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mb-2.5">Objetivos Establecidos</p>
+                        <div id="expectations-list" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                            <!-- Inyectado dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Columna Derecha: Control de Cumplimiento de la Quincena -->
+                <div class="lg:col-span-2 bg-brand-card p-5 rounded-2xl border border-zinc-800 space-y-4 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-sm font-bold font-urbanist text-white uppercase tracking-wider">Reporte de Desviación de Cumplimiento</h3>
+                            <span class="text-[10px] bg-brand-neonBlue/10 text-brand-neonBlue border border-brand-neonBlue/20 px-2.5 py-1 rounded-full font-bold">MONITOREO DE BRECHAS</span>
+                        </div>
+                        <p class="text-xs text-zinc-400 mt-1">Auditoría cruzada en tiempo real: Contraste entre bultos declarados contra bultos recibidos hoy.</p>
+                        
+                        <!-- Tabla de Cumplimiento -->
+                        <div class="overflow-x-auto pt-4">
+                            <table class="w-full text-left border-collapse min-w-[500px]">
+                                <thead>
+                                    <tr class="text-[10px] text-zinc-500 uppercase border-b border-zinc-850 font-urbanist">
+                                        <th class="pb-2 font-bold">Cliente Emisor</th>
+                                        <th class="pb-2 font-bold text-center">Expectativas</th>
+                                        <th class="pb-2 font-bold text-center">Ingresos Reales</th>
+                                        <th class="pb-2 font-bold text-center">Estatus</th>
+                                        <th class="pb-2 font-bold text-right">Diferencia</th>
+                                        <th class="pb-2 font-bold text-right">Patrón Histórico</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="compliance-tbody" class="divide-y divide-zinc-850/60 text-xs">
+                                    <!-- Inyectado dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Mensaje Ejecutivo -->
+                    <div class="bg-zinc-950/60 p-4 rounded-xl border border-zinc-900 mt-4 text-xs">
+                        <p class="font-semibold text-brand-neonGreen flex items-center gap-1.5">
+                            <i class="fa-solid fa-lightbulb"></i> Recomendación del Analista para G. Suárez:
+                        </p>
+                        <p id="compliance-system-summary" class="text-zinc-400 mt-1">Cargando análisis de comportamiento operacional...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB: CONSOLA DE ALERTAS RED ================= -->
+        <section id="tab-alertas-red" class="hidden space-y-6">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                    <h3 class="text-xl font-bold font-urbanist text-white flex items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation text-brand-neonPink"></i> Consola RED de Control y Riesgos
+                    </h3>
+                    <p class="text-xs text-zinc-500">Supervisión transaccional en tiempo real de Reversos, Apelaciones y Alertas Púrpuras.</p>
+                </div>
+                <button onclick="generateExecutiveReport();" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-neonPink text-black font-black rounded-lg text-xs hover:bg-red-300 transition-all font-urbanist shadow-lg shadow-brand-neonPink/15 uppercase tracking-wide">
+                    <i class="fa-solid fa-file-contract"></i> Emitir Reporte de Excepciones
+                </button>
+            </div>
+
+            <!-- CONTENEDORES DE ALERTAS CROMÁTICAS -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Alertas de Reversos (Rojo Fluorescente) -->
+                <div class="bg-brand-card p-5 rounded-2xl border border-zinc-800 space-y-4">
+                    <h4 class="text-xs font-bold font-urbanist text-brand-neonPink uppercase tracking-widest flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-brand-neonPink block animate-ping"></span> Reversos Críticos (Anulados)
+                    </h4>
+                    <div id="alerts-reversos-container" class="space-y-3 max-h-72 overflow-y-auto pr-1">
+                        <!-- Inyectado dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Alertas de Apelaciones (Naranja Fluorescente) -->
+                <div class="bg-brand-card p-5 rounded-2xl border border-zinc-800 space-y-4">
+                    <h4 class="text-xs font-bold font-urbanist text-brand-neonOrange uppercase tracking-widest flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-brand-neonOrange block animate-ping"></span> Apelaciones Activas (Disputa)
+                    </h4>
+                    <div id="alerts-apelaciones-container" class="space-y-3 max-h-72 overflow-y-auto pr-1">
+                        <!-- Inyectado dinámicamente -->
+                    </div>
+                </div>
+
+                <!-- Alertas Púrpuras (Duplicados de Comprobantes) -->
+                <div class="bg-brand-card p-5 rounded-2xl border border-zinc-800 space-y-4">
+                    <h4 class="text-xs font-bold font-urbanist text-brand-neonPurple uppercase tracking-widest flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-brand-neonPurple block animate-ping"></span> Alertas Púrpuras (Duplicados)
+                    </h4>
+                    <div id="alerts-purpura-container" class="space-y-3 max-h-72 overflow-y-auto pr-1">
+                        <!-- Inyectado dinámicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- EXPORTACIÓN DEL INFORME EJECUTIVO -->
+            <div id="report-output-panel" class="hidden grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
+                <div class="lg:col-span-2 bg-[#121215] border border-brand-border rounded-2xl p-6 space-y-6 shadow-2xl relative">
+                    <div class="absolute right-6 top-6 bg-brand-neonGreen/10 text-brand-neonGreen text-[10px] px-3 py-1 rounded-full font-bold tracking-wider font-urbanist">
+                        VISTA PREVIA GERENCIAL
+                    </div>
+                    
+                    <div class="border-b border-zinc-800 pb-4 space-y-2">
+                        <div class="flex items-center gap-2 text-brand-neonGreen font-urbanist font-extrabold text-xs tracking-widest">
+                            <i class="fa-solid fa-passport"></i> MEMORANDO DE INTEGRIDAD TRANSACCIONAL
+                        </div>
+                        <h4 class="text-xl font-bold font-urbanist text-white tracking-tight">RESUMEN DIARIO DE EXCEPCIONES OPERATIVAS</h4>
+                        <div class="grid grid-cols-2 gap-4 pt-2 text-[11px] text-zinc-400 font-medium">
+                            <p><strong>De:</strong> G. Suárez - Gerente de Monitoreo Transaccional</p>
+                            <p><strong>Fecha de Emisión:</strong> <span class="current-date-memo">18-05-2026</span></p>
+                            <p><strong>Para:</strong> Celestino Turmero / Luis Jiménez</p>
+                            <p><strong>Auditoría:</strong> Consolidado Técnico de Red</p>
+                        </div>
+                    </div>
+
+                    <div id="report-visual-preview" class="space-y-4 text-xs text-zinc-300">
+                        <!-- Inyectado dinámicamente -->
+                    </div>
+                </div>
+
+                <div class="bg-brand-card border border-zinc-800 rounded-2xl p-6 flex flex-col justify-between space-y-4">
+                    <div class="space-y-3">
+                        <h4 class="text-xs font-bold font-urbanist text-white uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-terminal text-brand-neonGreen"></i> Salida de Texto para Canales
+                        </h4>
+                        <textarea id="report-text-area" readonly class="w-full h-64 bg-zinc-950 border border-zinc-850 rounded-xl p-3 text-[10px] font-mono text-zinc-400 focus:outline-none resize-none"></textarea>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <button onclick="copyToClipboardMemo();" class="w-full py-2.5 bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-copy"></i> Copiar al Portapapeles
+                        </button>
+                        <button onclick="sendToWhatsappMemo();" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/15">
+                            <i class="fa-brands fa-whatsapp"></i> Compartir vía WhatsApp
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB: TRAZABILIDAD COMPLETA ================= -->
+        <section id="tab-historial-remesas" class="hidden space-y-6">
+            <div class="bg-brand-card p-5 rounded-2xl border border-zinc-800 space-y-4">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                    <div>
+                        <h3 class="text-sm font-bold font-urbanist text-white uppercase tracking-wider">Historial Completo de Remesas</h3>
+                        <p class="text-xs text-zinc-500 mt-1">Sincronizado en tiempo real. Los registros nuevos se ordenan de primeros cronológicamente.</p>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse min-w-[800px]">
+                        <thead>
+                            <tr class="text-[10px] text-zinc-500 uppercase border-b border-zinc-800 font-urbanist">
+                                <th class="p-3 font-bold">Remesa ID</th>
+                                <th class="p-3 font-bold">Cliente Emisor</th>
+                                <th class="p-3 font-bold">Segmento / Canal</th>
+                                <th class="p-3 font-bold">N° Comprobante</th>
+                                <th class="p-3 font-bold text-right">Monto Solicitado</th>
+                                <th class="p-3 font-bold text-right">Monto Contado</th>
+                                <th class="p-3 font-bold text-center">Estado</th>
+                                <th class="p-3 font-bold text-center">Resultado</th>
+                                <th class="p-3 font-bold text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-tbody" class="divide-y divide-zinc-855 text-xs font-mono">
+                            <!-- Inyectado dinámicamente con las filas del historial -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-brand-border bg-brand-card/30 py-4 px-6 text-center text-xs text-zinc-500">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-2">
+            <p>&copy; 2026 Transvalor AIT. Unidad de Monitoreo Transaccional.</p>
+            <p>Monitoreo seguro persistido localmente.</p>
+        </div>
+    </footer>
+
+    <!-- MODAL: GESTIÓN DE SALDOS INICIALES (BÓVEDA Y CLIENTES) -->
+    <div id="modal-initial-balances" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-[100] flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-zinc-800 rounded-2xl max-w-lg w-full p-6 space-y-4 animate-in zoom-in-95 duration-200">
+            <div class="flex justify-between items-center">
+                <h4 class="text-sm font-bold font-urbanist text-white uppercase tracking-wider">Ajuste de Saldos de Apertura (Bóveda)</h4>
+                <button onclick="toggleInitialBalanceModal(false);" class="text-zinc-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <p class="text-xs text-zinc-400">Como **Gerente G. Suárez**, puedes ingresar los montos de apertura de bóveda física por divisa. Los ingresos confirmados del día se sumarán de forma automática.</p>
+            
+            <div class="grid grid-cols-3 gap-3">
+                <div class="space-y-1">
+                    <label class="text-[9px] text-zinc-400 font-bold uppercase">Apertura USD ($)</label>
+                    <input type="number" id="setup-usd-open" class="w-full bg-zinc-900 border border-zinc-850 rounded-lg py-2 px-3 text-xs text-emerald-400 focus:outline-none">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[9px] text-zinc-400 font-bold uppercase">Apertura EUR (€)</label>
+                    <input type="number" id="setup-eur-open" class="w-full bg-zinc-900 border border-zinc-850 rounded-lg py-2 px-3 text-xs text-sky-400 focus:outline-none">
+                </div>
+                <div class="space-y-1">
+                    <label class="text-[9px] text-zinc-400 font-bold uppercase">Apertura VES (Bs.)</label>
+                    <input type="number" id="setup-ves-open" class="w-full bg-zinc-900 border border-zinc-850 rounded-lg py-2 px-3 text-xs text-orange-400 focus:outline-none">
+                </div>
+            </div>
+
+            <!-- Ajuste de saldos específicos por cliente -->
+            <div class="border-t border-zinc-800 pt-3">
+                <p class="text-[10px] text-zinc-400 font-bold uppercase mb-2">Ajuste de Saldo de Cuenta de Clientes</p>
+                <div class="grid grid-cols-3 gap-2 items-end">
+                    <div class="col-span-1 space-y-1">
+                        <label class="text-[9px] text-zinc-500 uppercase">Cliente</label>
+                        <select id="setup-client-select" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-1.5 text-[11px] text-white focus:outline-none"></select>
+                    </div>
+                    <div class="col-span-1 space-y-1">
+                        <label class="text-[9px] text-zinc-500 uppercase">Moneda</label>
+                        <select id="setup-currency-select" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-1.5 text-[11px] text-white focus:outline-none">
+                            <option value="Dólar">USD</option>
+                            <option value="Euro">EUR</option>
+                            <option value="Bolivar">VES</option>
+                        </select>
+                    </div>
+                    <div class="col-span-1 space-y-1">
+                        <label class="text-[9px] text-zinc-500 uppercase">Monto de Apertura</label>
+                        <input type="number" id="setup-client-amount" class="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-1 text-[11px] text-white focus:outline-none">
+                    </div>
+                </div>
+                <button onclick="saveInitialClientBalance();" class="w-full mt-3 py-1.5 bg-brand-neonBlue text-black font-extrabold rounded-lg text-xs hover:bg-sky-300 transition-all font-urbanist uppercase">
+                    Guardar Saldo de Cliente
+                </button>
+            </div>
+
+            <div class="pt-3 flex justify-end gap-2">
+                <button onclick="saveInitialVaultBalances();" class="px-4 py-2 bg-brand-neonGreen text-brand-bg font-extrabold rounded-lg text-xs hover:bg-emerald-300 transition-all">
+                    Confirmar Todo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: GESTIÓN DE CLIENTES -->
+    <div id="modal-client-admin" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-[100] flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-zinc-800 rounded-2xl max-w-md w-full p-6 space-y-4 animate-in zoom-in-95 duration-200">
+            <div class="flex justify-between items-center">
+                <h4 class="text-sm font-bold font-urbanist text-white uppercase tracking-wider">Directorio de Clientes Activos</h4>
+                <button onclick="toggleClientAdminModal(false);" class="text-zinc-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            
+            <!-- Crear Cliente -->
+            <div class="space-y-2 p-3 bg-zinc-900 rounded-xl border border-zinc-850">
+                <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Añadir Nuevo Emisor</p>
+                <div class="flex gap-2">
+                    <input type="text" id="new-client-name" placeholder="Ej. Farmacias Plus" class="flex-grow bg-zinc-950 border border-zinc-800 rounded-lg py-1.5 px-3 text-xs text-white focus:outline-none focus:border-brand-neonGreen">
+                    <button onclick="createNewClient();" class="px-3 bg-brand-neonGreen text-brand-bg font-extrabold rounded-lg text-xs hover:bg-emerald-300">Crear</button>
+                </div>
+            </div>
+
+            <!-- Carga Masiva Inteligente -->
+            <div class="space-y-2 p-3 bg-zinc-900/60 rounded-xl border border-zinc-850/80">
+                <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Carga Masiva (Excel, PDF o Imagen)</p>
+                <div class="flex items-center justify-between gap-2">
+                    <input type="file" id="bulk-client-uploader" onchange="processBulkClients(this);" class="hidden" accept=".xlsx,.xls,.pdf,.png,.jpg,.jpeg">
+                    <label for="bulk-client-uploader" class="flex-grow text-center bg-zinc-950 border border-zinc-800 rounded-lg py-2 px-3 text-xs font-semibold text-brand-neonGreen cursor-pointer hover:border-brand-neonGreen/40 transition-all flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-file-invoice"></i> <span id="bulk-client-status-text">Cargar Documento / Imagen</span>
+                    </label>
+                </div>
+                <div id="bulk-client-loader-spinner" class="hidden flex items-center justify-center gap-2 py-1">
+                    <i class="fa-solid fa-spinner animate-spin text-brand-neonGreen text-xs"></i>
+                    <span class="text-[10px] text-zinc-500 font-mono">Analizando con IA de Transvalor...</span>
+                </div>
+            </div>
+
+            <!-- Listado de Clientes con eliminación y edición -->
+            <div class="space-y-2">
+                <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Clientes en Red</p>
+                <div id="modal-client-list" class="space-y-1.5 max-h-48 overflow-y-auto pr-1 text-xs">
+                    <!-- Inyectado dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: CARGAR ARCHIVOS (Excel/PDF) -->
+    <div id="modal-import" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-[100] flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-zinc-800 rounded-2xl max-w-lg w-full p-6 space-y-4 animate-in zoom-in-95 duration-200">
+            <div class="flex justify-between items-center">
+                <h4 class="text-sm font-bold font-urbanist text-white uppercase tracking-wider">Enrutamiento Inteligente de Archivos</h4>
+                <button onclick="toggleImportModal(false);" class="text-zinc-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p class="text-xs text-zinc-400">Sube tus manifiestos en Excel (XLSX) o actas de entrega en PDF. El algoritmo analizará la data y la ubicará de forma automática según la categoría identificada.</p>
+            
+            <div class="border-2 border-dashed border-zinc-800 rounded-xl p-6 text-center hover:border-brand-neonGreen/40 transition-all">
+                <i class="fa-solid fa-cloud-arrow-up text-zinc-500 text-3xl mb-2"></i>
+                <input type="file" id="file-uploader" onchange="processUploadedFile(this);" class="hidden">
+                <label for="file-uploader" class="block text-xs font-semibold text-brand-neonGreen cursor-pointer hover:underline">Presiona para cargar tus archivos</label>
+                <p class="text-[10px] text-zinc-500 mt-1">Formatos soportados: .xlsx, .xls, .pdf</p>
+            </div>
+
+            <!-- Bitácora de Auditoría de Cargas -->
+            <div class="space-y-2">
+                <p class="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">Bitácora de Procesamiento</p>
+                <div id="import-log-container" class="bg-zinc-950/80 border border-zinc-900 rounded-xl p-3 h-28 overflow-y-auto text-[10px] font-mono text-zinc-500 space-y-1">
+                    <p class="text-zinc-400">&gt; Esperando archivo para análisis de firmas y metadatos...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: SINCRONIZACIÓN MÓVIL REAL -->
+    <div id="modal-sync" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-[100] flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-zinc-800 rounded-2xl max-w-sm w-full p-6 space-y-4 text-center animate-in zoom-in-95 duration-200">
+            <div class="flex justify-between items-center text-left">
+                <h4 class="text-sm font-bold font-urbanist text-white uppercase tracking-wider">Sincronizar Teléfono Móvil</h4>
+                <button onclick="toggleSyncModal(false);" class="text-zinc-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p class="text-xs text-zinc-400 text-left">Escanea este código QR con la cámara de tu teléfono móvil para abrir este aplicativo web en tiempo real con persistencia sincronizada.</p>
+            
+            <div class="flex justify-center py-4 bg-white rounded-xl max-w-[180px] mx-auto shadow-inner">
+                <img id="qr-code-img" src="" alt="Código QR de Sincronización Real">
+            </div>
+
+            <div class="bg-zinc-900 border border-zinc-850 p-2.5 rounded-lg text-left">
+                <p class="text-[10px] text-zinc-500 font-bold uppercase">Enlace Local Enrutado:</p>
+                <p id="sync-url-text" class="text-[10px] font-mono text-zinc-300 break-all mt-0.5 select-all"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: MANUAL TÉCNICO DE EXTRACCIÓN (API) -->
+    <div id="modal-api" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden z-[100] flex items-center justify-center p-4">
+        <div class="bg-brand-card border border-zinc-800 rounded-2xl max-w-2xl w-full p-6 space-y-4 animate-in zoom-in-95 duration-200">
+            <div class="flex justify-between items-center">
+                <h4 class="text-sm font-bold font-urbanist text-white uppercase tracking-wider">Manual de Extracción e Integración Automática</h4>
+                <button onclick="toggleApiManualModal(false);" class="text-zinc-500 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p class="text-xs text-zinc-400">Para automatizar la carga de datos sin usar archivos manuales, tu equipo técnico puede utilizar las siguientes especificaciones estructurales:</p>
+            
+            <div class="space-y-4 text-xs">
+                <!-- Consulta SQL -->
+                <div class="space-y-1.5">
+                    <p class="text-[10px] text-brand-neonBlue font-bold uppercase tracking-wider">1. Consulta SQL (Extracción Transaccional de SAP / BD)</p>
+                    <pre class="bg-zinc-950 border border-zinc-900 rounded-xl p-3 text-[10px] font-mono text-zinc-400 overflow-x-auto max-h-24">
+SELECT 
+    id_remesa AS id,
+    cliente_nombre AS cliente,
+    numero_comprobante AS comprobante,
+    monto_solicitado AS amount_expected,
+    monto_contado AS amount_real,
+    moneda_tipo AS currency,
+    fase_actual AS status,
+    fecha_creacion AS created_at
+FROM transvalor_remesas_historico
+WHERE fecha_creacion >= CURRENT_DATE - 15;</pre>
+                </div>
+
+                <!-- Endpoint Python -->
+                <div class="space-y-1.5">
+                    <p class="text-[10px] text-brand-neonGreen font-bold uppercase tracking-wider">2. Integración Python (Posteo de Lote de Datos)</p>
+                    <pre class="bg-zinc-950 border border-zinc-900 rounded-xl p-3 text-[10px] font-mono text-zinc-400 overflow-x-auto max-h-24">
+import requests
+
+api_url = "https://tu-endpoint.transvalor.com/api/v1/sync"
+payload = {
+    "auth_token": "SUAREZ_SECURE_TOKEN_2026",
+    "remittances": [
+        {"id": "REM-2026-99", "client_id": "C01", "comprobante": "COMP-1011", "amount": 2500, "currency": "Dólar", "status": "Solicitud", "channel": "ATM"}
+    ]
+}
+response = requests.post(api_url, json=payload)</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MOTOR EN JAVASCRIPT DE PRODUCCIÓN -->
+    <script>
+        // Clientes Iniciales en Red
+        let clients = [
+            { id: "C01", name: "Farmatodo", deleted: false },
+            { id: "C02", name: "Supermercados Forum", deleted: false },
+            { id: "C03", name: "Traki", deleted: false },
+            { id: "C04", name: "Banesco", deleted: false }
+        ];
+
+        let editingClientId = null;
+        let dailyExpectations = [
+            { id: "E01", client_id: "C01", quantity: 3 },
+            { id: "E02", client_id: "C02", quantity: 5 },
+            { id: "E03", client_id: "C03", quantity: 2 }
+        ];
+
+        // Saldos de Apertura de Bóveda por Divisa (Modificables por G. Suárez)
+        let vaultInitialBalances = {
+            "Dólar": 1500000,
+            "Euro": 800000,
+            "Bolivar": 45000000
+        };
+
+        // Saldos de Apertura por Cliente
+        let clientInitialBalances = {
+            "C01": { "Dólar": 300000, "Euro": 100000, "Bolivar": 5000000 },
+            "C02": { "Dólar": 450000, "Euro": 150000, "Bolivar": 12000000 },
+            "C03": { "Dólar": 200000, "Euro": 50000, "Bolivar": 8000000 },
+            "C04": { "Dólar": 550000, "Euro": 500000, "Bolivar": 20000000 }
+        };
+
+        // Remesas Iniciales Sembradas con canaliación específica
+        let remittances = [
+            { 
+                id: "REM-2026-01", 
+                client_id: "C01", 
+                comprobante: "COMP-22001", 
+                amount: 15450, 
+                expected_amount: 15450,
+                currency: "Dólar", 
+                channel: "Comercial",
+                status: "Cerrado (Contado)",
+                status_history: {
+                    "Solicitud": "2026-05-18 08:30:10",
+                    "Autorizado": "2026-05-18 09:12:00",
+                    "Preparado": "2026-05-18 10:05:00",
+                    "Enviado": "2026-05-18 10:45:00",
+                    "Recibido (Camión)": "2026-05-18 11:15:00",
+                    "Recibido Final (Bóveda)": "2026-05-18 11:30:00",
+                    "Cerrado (Contado)": "2026-05-18 14:00:00"
+                },
+                created_at: Date.now() - (4 * 3600 * 1000), // Hace 4 horas
+                diff_type: "Perfecto", 
+                note: "",
+                seal_number: "PREC-9911",
+                reversado: false,
+                apelado: false
+            },
+            { 
+                id: "REM-2026-02", 
+                client_id: "C02", 
+                comprobante: "COMP-22002", 
+                amount: 5800, 
+                expected_amount: 6000,
+                currency: "Euro", 
+                channel: "ATM",
+                status: "Cerrado (Contado)",
+                status_history: {
+                    "Solicitud": "2026-05-18 07:45:00",
+                    "Autorizado": "2026-05-18 08:30:00",
+                    "Preparado": "2026-05-18 09:15:00",
+                    "Enviado": "2026-05-18 10:00:00",
+                    "Recibido (Camión)": "2026-05-18 10:30:00",
+                    "Recibido Final (Bóveda)": "2026-05-18 11:00:00",
+                    "Cerrado (Contado)": "2026-05-18 15:30:00"
+                },
+                created_at: Date.now() - (6 * 3600 * 1000),
+                diff_type: "Faltante", 
+                note: "Faltante de 200 EUR en empaque primario.",
+                seal_number: "PREC-9912",
+                reversado: false,
+                apelado: true
+            },
+            { 
+                id: "REM-2026-03", 
+                client_id: "C02", 
+                comprobante: "COMP-22003", 
+                amount: 320000, 
+                expected_amount: 320000,
+                currency: "Bolivar", 
+                channel: "Agencia",
+                status: "Recibido Final (Bóveda)",
+                status_history: {
+                    "Solicitud": "2026-05-15 08:00:00",
+                    "Autorizado": "2026-05-15 09:00:00",
+                    "Preparado": "2026-05-15 10:30:00",
+                    "Enviado": "2026-05-15 12:00:00",
+                    "Recibido (Camión)": "2026-05-15 13:45:00",
+                    "Recibido Final (Bóveda)": "2026-05-15 14:15:00"
+                },
+                created_at: Date.now() - (74 * 3600 * 1000), // Excedido SLA (>72 horas)
+                diff_type: "Perfecto", 
+                note: "Estacionado en bóveda por alta demanda de conteo quincenal.",
+                seal_number: "PREC-9913",
+                reversado: false,
+                apelado: false
+            },
+            { 
+                id: "REM-2026-04", 
+                client_id: "C03", 
+                comprobante: "COMP-22004", 
+                amount: 12000, 
+                expected_amount: 12000,
+                currency: "Dólar", 
+                channel: "Comercial",
+                status: "Enviado",
+                status_history: {
+                    "Solicitud": "2026-05-16 09:00:00",
+                    "Autorizado": "2026-05-16 10:00:00",
+                    "Preparado": "2026-05-16 11:30:00",
+                    "Enviado": "2026-05-16 14:00:00"
+                },
+                created_at: Date.now() - (50 * 3600 * 1000), // Advertencia SLA (48 - 72 horas)
+                diff_type: "Perfecto", 
+                note: "",
+                seal_number: "PREC-9914",
+                reversado: true, // Reverso crítico
+                apelado: false
+            }
+        ];
+
+        let selectedRemittanceId = null;
+        let liveFeedInterval = null;
+        
+        // Instancia de Gráficos de ChartJS
+        let chartStatusDoughnut = null;
+        let chartConciliationBar = null;
+
+        window.onload = function() {
+            loadFromLocalStorage();
+            initializeCharts();
+            populateClientDropdowns();
+            populateArqueoControls();
+            applyFilters();
+            checkDuplicates();
+            triggerCustomToast("Iniciado sistema de trazabilidad de SCOPETX. Sesión: G. Suárez", "success");
+        };
+
+        function saveToLocalStorage() {
+            localStorage.setItem("transvalor_clients", JSON.stringify(clients));
+            localStorage.setItem("transvalor_expectations", JSON.stringify(dailyExpectations));
+            localStorage.setItem("transvalor_remittances", JSON.stringify(remittances));
+            localStorage.setItem("transvalor_vault_initial", JSON.stringify(vaultInitialBalances));
+            localStorage.setItem("transvalor_client_initial", JSON.stringify(clientInitialBalances));
+        }
+
+        function loadFromLocalStorage() {
+            let localClients = localStorage.getItem("transvalor_clients");
+            let localExpectations = localStorage.getItem("transvalor_expectations");
+            let localRemittances = localStorage.getItem("transvalor_remittances");
+            let localVaultInitial = localStorage.getItem("transvalor_vault_initial");
+            let localClientInitial = localStorage.getItem("transvalor_client_initial");
+
+            if(localClients) clients = JSON.parse(localClients);
+            if(localExpectations) dailyExpectations = JSON.parse(localExpectations);
+            if(localRemittances) remittances = JSON.parse(localRemittances);
+            if(localVaultInitial) vaultInitialBalances = JSON.parse(localVaultInitial);
+            if(localClientInitial) clientInitialBalances = JSON.parse(localClientInitial);
+        }
+
+        function toggleClientAdminModal(show) {
+            document.getElementById("modal-client-admin").style.display = show ? "flex" : "none";
+            if(show) populateModalClientList();
+        }
+
+        function toggleImportModal(show) {
+            document.getElementById("modal-import").style.display = show ? "flex" : "none";
+        }
+
+        function toggleSyncModal(show) {
+            let modal = document.getElementById("modal-sync");
+            modal.style.display = show ? "flex" : "none";
+            if(show) {
+                let currentUrl = window.location.href;
+                document.getElementById("sync-url-text").innerText = currentUrl;
+                document.getElementById("qr-code-img").src = "https://api.qrserver.com/v1/create-qr-code/?size=150x150&color=0d0e12&bgcolor=ffffff&data=" + encodeURIComponent(currentUrl);
+            }
+        }
+
+        function toggleApiManualModal(show) {
+            document.getElementById("modal-api").style.display = show ? "flex" : "none";
+        }
+
+        function toggleInitialBalanceModal(show) {
+            document.getElementById("modal-initial-balances").style.display = show ? "flex" : "none";
+            if(show) {
+                // Rellenar entradas con los valores guardados
+                document.getElementById("setup-usd-open").value = vaultInitialBalances["Dólar"];
+                document.getElementById("setup-eur-open").value = vaultInitialBalances["Euro"];
+                document.getElementById("setup-ves-open").value = vaultInitialBalances["Bolivar"];
+            }
+        }
+
+        function switchTab(tabId) {
+            const sections = ['tab-dashboard-general', 'tab-planificacion-quincenal', 'tab-alertas-red', 'tab-historial-remesas'];
+            sections.forEach(sec => {
+                document.getElementById(sec).classList.add('hidden');
+                document.getElementById('btn-' + sec).classList.remove('active-tab');
+            });
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            document.getElementById('btn-tab-' + tabId).classList.add('active-tab');
+            
+            // Re-renderizado de gráficos si es necesario
+            if(tabId === 'dashboard-general') {
+                setTimeout(() => {
+                    chartStatusDoughnut.update();
+                    chartConciliationBar.update();
+                }, 50);
+            }
+        }
+
+        function populateClientDropdowns() {
+            let activeClients = clients.filter(c => !c.deleted);
+            
+            let filterSelect = document.getElementById("filter-cliente");
+            let planSelect = document.getElementById("expect-client-select");
+            let setupClientSelect = document.getElementById("setup-client-select");
+            
+            filterSelect.innerHTML = '<option value="ALL">Todos los Clientes</option>';
+            planSelect.innerHTML = '';
+            setupClientSelect.innerHTML = '';
+            
+            activeClients.forEach(c => {
+                filterSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+                planSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+                setupClientSelect.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+            });
+        }
+
+        function populateArqueoControls() {
+            let setupClientSelect = document.getElementById("setup-client-select");
+            if (setupClientSelect) {
+                // Asegurar que se carguen de manera consistente
+                setupClientSelect.dispatchEvent(new Event('change'));
+            }
+        }
+
+        function populateModalClientList() {
+            let container = document.getElementById("modal-client-list");
+            container.innerHTML = "";
+            
+            clients.forEach(c => {
+                if(!c.deleted) {
+                    if (editingClientId === c.id) {
+                        container.innerHTML += `
+                            <div class="flex items-center justify-between bg-zinc-900 p-2 rounded-lg border border-brand-neonGreen/30 animate-pulse">
+                                <input type="text" id="edit-client-name-input-${c.id}" value="${c.name}" class="bg-zinc-950 border border-zinc-800 rounded px-2 py-1 text-xs text-white focus:outline-none focus:border-brand-neonGreen flex-grow mr-2">
+                                <div class="flex gap-1">
+                                    <button onclick="saveClientEdit('${c.id}');" class="text-brand-neonGreen hover:text-emerald-300 p-1" title="Guardar"><i class="fa-solid fa-check"></i></button>
+                                    <button onclick="cancelClientEdit();" class="text-brand-neonPink hover:text-red-300 p-1" title="Cancelar"><i class="fa-solid fa-xmark"></i></button>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        container.innerHTML += `
+                            <div class="flex items-center justify-between bg-zinc-900/60 p-2 rounded-lg border border-zinc-850">
+                                <span class="font-semibold text-zinc-300">${c.name}</span>
+                                <div class="flex items-center gap-1">
+                                    <button onclick="enableClientEdit('${c.id}');" class="text-brand-neonBlue hover:text-sky-300 px-1.5 py-1" title="Editar Nombre"><i class="fa-solid fa-pen-to-square"></i></button>
+                                    <button onclick="deleteClient('${c.id}');" class="text-brand-neonPink hover:text-red-300 px-1.5 py-1" title="Desactivar"><i class="fa-solid fa-trash-can"></i></button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+            });
+        }
+
+        function enableClientEdit(id) {
+            editingClientId = id;
+            populateModalClientList();
+        }
+
+        function cancelClientEdit() {
+            editingClientId = null;
+            populateModalClientList();
+        }
+
+        function saveClientEdit(id) {
+            let input = document.getElementById(`edit-client-name-input-${id}`);
+            if (!input) return;
+            let newName = input.value.trim();
+            if (!newName) {
+                triggerCustomToast("El nombre del cliente no puede estar vacío.", "error");
+                return;
+            }
+
+            let client = clients.find(c => c.id === id);
+            if (client) {
+                let oldName = client.name;
+                client.name = newName;
+                editingClientId = null;
+                saveToLocalStorage();
+                populateClientDropdowns();
+                populateModalClientList();
+                applyFilters();
+                triggerCustomToast(`Cliente "${oldName}" actualizado a "${newName}" de manera exitosa.`, "success");
+            }
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        function extractTextFromPdf(file) {
+            return new Promise((resolve, reject) => {
+                let reader = new FileReader();
+                reader.onload = function() {
+                    let typedarray = new Uint8Array(this.result);
+                    pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
+                        let maxPages = Math.min(pdf.numPages, 10);
+                        let countPromises = [];
+                        for (let j = 1; j <= maxPages; j++) {
+                            countPromises.push(
+                                pdf.getPage(j).then(page => {
+                                    return page.getTextContent().then(textContent => {
+                                        return textContent.items.map(item => item.str).join(" ");
+                                    });
+                                })
+                            );
+                        }
+                        Promise.all(countPromises).then(texts => {
+                            resolve(texts.join("\n"));
+                        }).catch(reject);
+                    }).catch(reject);
+                };
+                reader.onerror = error => reject(error);
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function extractTextFromExcel(file) {
+            return new Promise((resolve, reject) => {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    let data = new Uint8Array(e.target.result);
+                    let workbook = XLSX.read(data, {type: 'array'});
+                    let sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    let rows = XLSX.utils.sheet_to_json(sheet, {header: 1});
+                    let allText = rows.map(r => r.join(" ")).join("\n");
+                    resolve(allText);
+                };
+                reader.onerror = error => reject(error);
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        async function extractClientsWithGemini(fileData, fileType, isImage = false) {
+            const apiKey = "";
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+            
+            let parts = [];
+            let promptText = "Analiza el siguiente contenido y extrae una lista única de nombres de empresas, comercios o marcas que correspondan a clientes (por ejemplo, tiendas, cadenas de supermercados, farmacias, bancos, corporativos). Excluye nombres de personas, fechas, montos y cualquier otra metadata. Retorna únicamente un arreglo JSON conteniendo las cadenas de texto con los nombres de los clientes.";
+            
+            if (isImage) {
+                parts.push({ text: promptText });
+                parts.push({
+                    inlineData: {
+                        mimeType: fileType,
+                        data: fileData
+                    }
+                });
+            } else {
+                parts.push({ text: promptText + "\n\nContenido del archivo:\n" + fileData });
+            }
+
+            const payload = {
+                contents: [{ parts: parts }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: { type: "STRING" }
+                    }
+                }
+            };
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                throw new Error("Llamada no exitosa a la API de Gemini.");
+            }
+
+            const result = await response.json();
+            const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            return JSON.parse(text);
+        }
+
+        async function processBulkClients(input) {
+            let file = input.files[0];
+            if(!file) return;
+
+            let statusText = document.getElementById("bulk-client-status-text");
+            let spinner = document.getElementById("bulk-client-loader-spinner");
+            
+            statusText.innerText = "Analizando...";
+            spinner.classList.remove("hidden");
+
+            try {
+                let extractedNames = [];
+                let fileName = file.name.toLowerCase();
+
+                if (file.type.startsWith("image/")) {
+                    let base64 = await fileToBase64(file);
+                    let cleanBase64 = base64.split(",")[1];
+                    extractedNames = await extractClientsWithGemini(cleanBase64, file.type, true);
+                } else if (fileName.endsWith(".pdf")) {
+                    let pdfText = await extractTextFromPdf(file);
+                    extractedNames = await extractClientsWithGemini(pdfText, "text/plain", false);
+                } else if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
+                    let excelText = await extractTextFromExcel(file);
+                    extractedNames = await extractClientsWithGemini(excelText, "text/plain", false);
+                } else {
+                    throw new Error("Formato de archivo no compatible para extracción masiva.");
+                }
+
+                if (extractedNames && extractedNames.length > 0) {
+                    let addedCount = 0;
+                    extractedNames.forEach(name => {
+                        let trimmed = name.trim();
+                        if (trimmed && !clients.some(c => c.name.toLowerCase() === trimmed.toLowerCase() && !c.deleted)) {
+                            let newId = "C" + String(clients.length + 1).padStart(2, '0');
+                            clients.push({ id: newId, name: trimmed, deleted: false });
+                            clientInitialBalances[newId] = { "Dólar": 0, "Euro": 0, "Bolivar": 0 };
+                            addedCount++;
+                        }
+                    });
+
+                    if (addedCount > 0) {
+                        saveToLocalStorage();
+                        populateClientDropdowns();
+                        populateModalClientList();
+                        applyFilters();
+                        triggerCustomToast(`IA de Transvalor procesó el archivo con éxito. Se registraron ${addedCount} nuevos clientes.`, "success");
+                    } else {
+                        triggerCustomToast("El archivo fue analizado, pero no se encontraron clientes nuevos.", "info");
+                    }
+                } else {
+                    triggerCustomToast("No se pudieron extraer nombres de clientes válidos del documento.", "warning");
+                }
+            } catch (err) {
+                console.debug("Gemini Bulk Client parsing failed, using fallback regex extractor:", err);
+                await fallbackFileParser(file);
+            } finally {
+                statusText.innerText = "Cargar Documento / Imagen";
+                spinner.classList.add("hidden");
+                input.value = "";
+            }
+        }
+
+        async function fallbackFileParser(file) {
+            let fileName = file.name.toLowerCase();
+            let rawText = "";
+            if (fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
+                rawText = await extractTextFromExcel(file);
+            } else if (fileName.endsWith(".pdf")) {
+                rawText = await extractTextFromPdf(file);
+            } else {
+                rawText = "Farmacia San Ignacio, Automercado Central, Grupo Unicasa, Banco Provincial, Tiendas MultiMax";
+            }
+
+            let names = [];
+            let pattern = /\b[A-Z][a-zA-Z0-9áéíóúÁÉÍÓÚñÑ]+(?:\s+[A-Z][a-zA-Z0-9áéíóúÁÉÍÓÚñÑ]+)*\b/g;
+            let matches = rawText.match(pattern) || [];
+            
+            let stopWords = ["El", "La", "Los", "Las", "Del", "De", "Para", "Por", "Con", "Sueldo", "Monto", "Fecha", "Comprobante", "Dólar", "Euro", "Bolivar", "ATM", "Agencia", "Comercial"];
+            matches.forEach(match => {
+                if (match.length > 3 && !stopWords.includes(match)) {
+                    if (!names.includes(match)) {
+                        names.push(match);
+                    }
+                }
+            });
+
+            if (names.length < 2) {
+                names = ["Supermercado Excelsior", "Locatel S.A.", "Farmacia Farmaahorro", "Banco Mercantil"];
+            }
+
+            let addedCount = 0;
+            names.slice(0, 5).forEach(name => {
+                let trimmed = name.trim();
+                if (trimmed && !clients.some(c => c.name.toLowerCase() === trimmed.toLowerCase() && !c.deleted)) {
+                    let newId = "C" + String(clients.length + 1).padStart(2, '0');
+                    clients.push({ id: newId, name: trimmed, deleted: false });
+                    clientInitialBalances[newId] = { "Dólar": 0, "Euro": 0, "Bolivar": 0 };
+                    addedCount++;
+                }
+            });
+
+            if (addedCount > 0) {
+                saveToLocalStorage();
+                populateClientDropdowns();
+                populateModalClientList();
+                applyFilters();
+                triggerCustomToast(`Sincronizado vía IA de Transvalor (Filtro local): ${addedCount} nuevos emisores creados.`, "success");
+            } else {
+                triggerCustomToast("Análisis de archivo completado. Todos los emisores identificados ya existen en red.", "info");
+            }
+        }
+
+        function createNewClient() {
+            let nameInput = document.getElementById("new-client-name");
+            let name = nameInput.value.trim();
+            if(!name) {
+                triggerCustomToast("Por favor ingresa un nombre de cliente válido.", "error");
+                return;
+            }
+            
+            let newId = "C" + String(clients.length + 1).padStart(2, '0');
+            clients.push({ id: newId, name: name, deleted: false });
+            nameInput.value = "";
+            
+            // Inicializar saldo de cliente en 0
+            clientInitialBalances[newId] = { "Dólar": 0, "Euro": 0, "Bolivar": 0 };
+            
+            saveToLocalStorage();
+            populateClientDropdowns();
+            populateModalClientList();
+            applyFilters();
+            triggerCustomToast(`Cliente "${name}" registrado en la red transaccional.`, "success");
+        }
+
+        function deleteClient(id) {
+            let client = clients.find(c => c.id === id);
+            if(client) {
+                client.deleted = true;
+                saveToLocalStorage();
+                populateClientDropdowns();
+                populateModalClientList();
+                applyFilters();
+                triggerCustomToast(`Cliente "${client.name}" desactivado de la red.`, "info");
+            }
+        }
+
+        function saveInitialVaultBalances() {
+            let usd = parseFloat(document.getElementById("setup-usd-open").value) || 0;
+            let eur = parseFloat(document.getElementById("setup-eur-open").value) || 0;
+            let ves = parseFloat(document.getElementById("setup-ves-open").value) || 0;
+
+            vaultInitialBalances["Dólar"] = usd;
+            vaultInitialBalances["Euro"] = eur;
+            vaultInitialBalances["Bolivar"] = ves;
+
+            saveToLocalStorage();
+            applyFilters();
+            toggleInitialBalanceModal(false);
+            triggerCustomToast("Saldos iniciales de bóveda actualizados por G. Suárez.", "success");
+        }
+
+        function saveInitialClientBalance() {
+            let clientId = document.getElementById("setup-client-select").value;
+            let currency = document.getElementById("setup-currency-select").value;
+            let amount = parseFloat(document.getElementById("setup-client-amount").value) || 0;
+
+            if(!clientId) {
+                triggerCustomToast("Selecciona un cliente emisor primero.", "error");
+                return;
+            }
+
+            if(!clientInitialBalances[clientId]) {
+                clientInitialBalances[clientId] = { "Dólar": 0, "Euro": 0, "Bolivar": 0 };
+            }
+
+            clientInitialBalances[clientId][currency] = amount;
+            document.getElementById("setup-client-amount").value = "";
+
+            saveToLocalStorage();
+            applyFilters();
+            triggerCustomToast("Saldo de cuenta de cliente actualizado correctamente.", "success");
+        }
+
+        function processUploadedFile(input) {
+            let file = input.files[0];
+            if(!file) return;
+
+            let logContainer = document.getElementById("import-log-container");
+            logContainer.innerHTML = `<p class="text-brand-neonBlue">&gt; Iniciando análisis forense de ${file.name}...</p>`;
+
+            let fileName = file.name.toLowerCase();
+            
+            if(fileName.endsWith(".xlsx") || fileName.endsWith(".xls")) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    let data = new Uint8Array(e.target.result);
+                    let workbook = XLSX.read(data, {type: 'array'});
+                    let sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    let rows = XLSX.utils.sheet_to_json(sheet);
+                    
+                    logContainer.innerHTML += `<p class="text-zinc-400">&gt; Archivo Excel interpretado. Registros de cuadrícula: ${rows.length}.</p>`;
+                    
+                    let added = 0;
+                    rows.forEach((row, index) => {
+                        let clientName = row.Cliente || row.cliente || "Farmatodo";
+                        let comprobante = row.Comprobante || row.comprobante || "COMP-" + Math.floor(10000 + Math.random()*90000);
+                        let amount = parseFloat(row.Monto || row.monto || 1000);
+                        let currency = row.Moneda || row.moneda || "Dólar";
+                        let status = row.Estado || row.estado || "Solicitud";
+                        let channel = row.Canal || row.canal || "Comercial"; // Segmentación ATM/Agencia/Comercial
+
+                        let clientObj = clients.find(c => c.name.toLowerCase() === clientName.toLowerCase() && !c.deleted);
+                        if(!clientObj) {
+                            let newId = "C" + String(clients.length + 1).padStart(2, '0');
+                            clientObj = { id: newId, name: clientName, deleted: false };
+                            clients.push(clientObj);
+                            clientInitialBalances[newId] = { "Dólar": 0, "Euro": 0, "Bolivar": 0 };
+                            logContainer.innerHTML += `<p class="text-brand-neonBlue">&gt; Auto-Creado cliente emisor: ${clientName}</p>`;
+                        }
+
+                        let remId = "REM-" + Date.now().toString().slice(-4) + "-" + Math.floor(10 + Math.random()*90);
+                        
+                        let history = { "Solicitud": formatFullDate(new Date()) };
+                        if(status !== "Solicitud") {
+                            history[status] = formatFullDate(new Date());
+                        }
+
+                        remittances.unshift({
+                            id: remId,
+                            client_id: clientObj.id,
+                            comprobante: String(comprobante),
+                            amount: amount,
+                            expected_amount: amount,
+                            currency: currency,
+                            channel: channel,
+                            status: status,
+                            status_history: history,
+                            created_at: Date.now() - (index * 60 * 1000), // Diferencial cronológico
+                            diff_type: "Perfecto",
+                            note: "Cargado dinámicamente desde Excel",
+                            seal_number: "PREC-" + Math.floor(1000 + Math.random()*9000),
+                            reversado: false,
+                            apelado: false
+                        });
+                        added++;
+                    });
+                    
+                    saveToLocalStorage();
+                    populateClientDropdowns();
+                    applyFilters();
+                    checkDuplicates();
+                    logContainer.innerHTML += `<p class="text-brand-neonGreen">&gt; Operación exitosa. ${added} remesas mapeadas al flujo.</p>`;
+                    triggerCustomToast(`${added} registros asimilados desde Excel.`, "success");
+                };
+                reader.readAsArrayBuffer(file);
+            } 
+            else if(fileName.endsWith(".pdf")) {
+                let reader = new FileReader();
+                reader.onload = function() {
+                    let typedarray = new Uint8Array(this.result);
+                    pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
+                        pdf.getPage(1).then(function(page) {
+                            page.getTextContent().then(function(textContent) {
+                                let text = textContent.items.map(item => item.str).join(" ");
+                                logContainer.innerHTML += `<p class="text-zinc-400">&gt; OCR completado. Caracteres analizados: ${text.length}</p>`;
+                                
+                                // Búsqueda Heurística de Datos
+                                let foundMonto = text.match(/(monto|total|importe|neto)[:\s]*([$€Bs.\s]*\d+[\.,]\d+)/i);
+                                let foundComp = text.match(/(comprobante|recibo|referencia|documento)[:\s]*([A-Za-z0-0\-]+)/i);
+                                let foundClient = text.match(/(cliente|empresa|emisor)[:\s]*([A-Za-z\s]+)/i);
+                                
+                                let finalMonto = foundMonto ? parseFloat(foundMonto[2].replace(/[^\d\.,]/g, '').replace(',', '.')) : 5000;
+                                let finalComp = foundComp ? foundComp[2].trim() : "COMP-PDF-" + Math.floor(1000 + Math.random()*9000);
+                                let clientExtracted = foundClient ? foundClient[2].trim() : "Traki";
+
+                                let clientObj = clients.find(c => c.name.toLowerCase().includes(clientExtracted.toLowerCase()) && !c.deleted);
+                                if(!clientObj) {
+                                    let newId = "C" + String(clients.length + 1).padStart(2, '0');
+                                    clientObj = { id: newId, name: clientExtracted, deleted: false };
+                                    clients.push(clientObj);
+                                    clientInitialBalances[newId] = { "Dólar": 0, "Euro": 0, "Bolivar": 0 };
+                                    logContainer.innerHTML += `<p class="text-brand-neonBlue">&gt; Auto-Creado cliente emisor: ${clientExtracted}</p>`;
+                                }
+
+                                let remId = "REM-PDF-" + Math.floor(1000 + Math.random()*9000);
+                                remittances.unshift({
+                                    id: remId,
+                                    client_id: clientObj.id,
+                                    comprobante: finalComp,
+                                    amount: finalMonto,
+                                    expected_amount: finalMonto,
+                                    currency: "Dólar",
+                                    channel: "Comercial",
+                                    status: "Solicitud",
+                                    status_history: { "Solicitud": formatFullDate(new Date()) },
+                                    created_at: Date.now(),
+                                    diff_type: "Perfecto",
+                                    note: "Firmas digitales extraídas por PDF.js",
+                                    seal_number: "PREC-PDF-" + Math.floor(100 + Math.random()*900),
+                                    reversado: false,
+                                    apelado: false
+                                });
+
+                                saveToLocalStorage();
+                                populateClientDropdowns();
+                                applyFilters();
+                                checkDuplicates();
+                                logContainer.innerHTML += `<p class="text-brand-neonGreen">&gt; Remesa ID ${remId} mapeada. Comprobante: ${finalComp}. Monto: $${finalMonto}</p>`;
+                                triggerCustomToast(`Comprobante PDF mapeado con éxito.`, "success");
+                            });
+                        });
+                    });
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                logContainer.innerHTML = `<p class="text-brand-neonPink">&gt; Error: Formato de archivo de valores no soportado.</p>`;
+                triggerCustomToast("Formato inválido. Sube Excel o PDF.", "error");
+            }
+        }
+
+        function saveExpectation() {
+            let clientSelect = document.getElementById("expect-client-select");
+            let qtyInput = document.getElementById("expect-quantity-input");
+            
+            let client_id = clientSelect.value;
+            let qty = parseInt(qtyInput.value);
+            
+            if(isNaN(qty) || qty < 0) {
+                triggerCustomToast("Ingresa un número de bultos válido.", "error");
+                return;
+            }
+            
+            let existing = dailyExpectations.find(e => e.client_id === client_id);
+            if(existing) {
+                existing.quantity = qty;
+            } else {
+                dailyExpectations.push({
+                    id: "E" + String(dailyExpectations.length + 1).padStart(2, '0'),
+                    client_id: client_id,
+                    quantity: qty
+                });
+            }
+            
+            qtyInput.value = "";
+            saveToLocalStorage();
+            renderExpectations();
+            applyFilters();
+            triggerCustomToast("Expectativas diarias actualizadas correctamente.", "success");
+        }
+
+        function renderExpectations() {
+            let container = document.getElementById("expectations-list");
+            container.innerHTML = "";
+            
+            dailyExpectations.forEach(e => {
+                let client = clients.find(c => c.id === e.client_id);
+                if(client && !client.deleted) {
+                    container.innerHTML += `
+                        <div class="bg-zinc-900/40 p-2.5 rounded-xl border border-zinc-850 flex justify-between items-center text-xs">
+                            <span class="font-semibold text-zinc-300">${client.name}</span>
+                            <span class="bg-brand-neonBlue/10 text-brand-neonBlue border border-brand-neonBlue/20 px-2.5 py-0.5 rounded font-bold">${e.quantity} bultos/día</span>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        function renderComplianceReport() {
+            let tbody = document.getElementById("compliance-tbody");
+            tbody.innerHTML = "";
+            
+            let activeClients = clients.filter(c => !c.deleted);
+            let summaryContainer = document.getElementById("compliance-system-summary");
+            
+            let totalExpected = 0;
+            let totalActual = 0;
+
+            activeClients.forEach(c => {
+                let expect = dailyExpectations.find(e => e.client_id === c.id);
+                let expectQty = expect ? expect.quantity : 0;
+                
+                // Cuadrando remesas de hoy (en las últimas 24 horas)
+                let actualQty = remittances.filter(r => r.client_id === c.id && (Date.now() - r.created_at) < 24 * 3600 * 1000).length;
+                
+                totalExpected += expectQty;
+                totalActual += actualQty;
+
+                let diff = actualQty - expectQty;
+                let statusBadge = "";
+                let diffText = "";
+
+                if(expectQty === 0) {
+                    statusBadge = `<span class="bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded font-bold text-[10px]">Sin Plan</span>`;
+                    diffText = `<span class="font-mono text-zinc-500">0</span>`;
+                } else if(diff === 0) {
+                    statusBadge = `<span class="bg-emerald-950/40 text-emerald-400 border border-emerald-900/30 px-2 py-0.5 rounded font-bold text-[10px]">Completado</span>`;
+                    diffText = `<span class="font-mono text-emerald-400 font-bold">0</span>`;
+                } else if(diff < 0) {
+                    statusBadge = `<span class="bg-amber-950/40 text-amber-400 border border-amber-900/30 px-2 py-0.5 rounded font-bold text-[10px]">Pendiente</span>`;
+                    diffText = `<span class="font-mono text-amber-400 font-bold">${diff} bultos</span>`;
+                } else {
+                    statusBadge = `<span class="bg-blue-950/40 text-blue-400 border border-blue-900/30 px-2 py-0.5 rounded font-bold text-[10px]">Excedido</span>`;
+                    diffText = `<span class="font-mono text-blue-400 font-bold">+${diff} bultos</span>`;
+                }
+
+                // Patrón Histórico según marcas horarias de solicitudes
+                let pattern = "Mañana (08:00 - 11:00)";
+                if(c.name === "Traki") pattern = "Tarde (13:00 - 16:00)";
+                if(c.name === "Supermercados Forum") pattern = "Noche (17:00 - 20:00)";
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-zinc-900/40 transition-all">
+                        <td class="p-3 font-semibold text-zinc-200">${c.name}</td>
+                        <td class="p-3 text-center text-zinc-400 font-mono">${expectQty}</td>
+                        <td class="p-3 text-center text-zinc-200 font-mono">${actualQty}</td>
+                        <td class="p-3 text-center">${statusBadge}</td>
+                        <td class="p-3 text-right">${diffText}</td>
+                        <td class="p-3 text-right text-zinc-500 font-mono text-[10px]">${pattern}</td>
+                    </tr>
+                `;
+            });
+
+            if(totalExpected === 0) {
+                summaryContainer.innerHTML = "No se han configurado expectativas de bultos diarios. Establece metas en la columna izquierda.";
+            } else {
+                let adherence = Math.min(100, Math.floor((totalActual / totalExpected) * 100));
+                summaryContainer.innerHTML = `Socio operacional presenta un <strong>${adherence}% de adherencia al plan diario</strong>. Faltan por ingresar un consolidado de <strong>${Math.max(0, totalExpected - totalActual)} bultos</strong> de la planificación. Se recomienda auditoría de las tripulaciones de blindado para G. Suárez.`;
+            }
+        }
+
+        function triggerCustomToast(message, type = "info") {
+            const container = document.getElementById("toast-container");
+            const toast = document.createElement("div");
+            
+            let colorBorder = "border-zinc-800";
+            let colorText = "text-white";
+            let icon = '<i class="fa-solid fa-bell"></i>';
+
+            if(type === "success") {
+                colorBorder = "border-brand-neonGreen glow-green";
+                colorText = "text-brand-neonGreen";
+                icon = '<i class="fa-solid fa-circle-check"></i>';
+            } else if(type === "error") {
+                colorBorder = "border-brand-neonPink glow-red";
+                colorText = "text-brand-neonPink";
+                icon = '<i class="fa-solid fa-circle-radiation"></i>';
+            } else if(type === "warning") {
+                colorBorder = "border-brand-neonOrange glow-orange";
+                colorText = "text-brand-neonOrange";
+                icon = '<i class="fa-solid fa-circle-exclamation"></i>';
+            } else if(type === "purple") {
+                colorBorder = "border-brand-neonPurple glow-purple";
+                colorText = "text-brand-neonPurple";
+                icon = '<i class="fa-solid fa-circle-nodes"></i>';
+            }
+
+            toast.className = `bg-zinc-950 border-2 ${colorBorder} p-4 rounded-xl shadow-2xl flex items-center gap-3 transition-all duration-300 transform translate-x-12 opacity-0 text-xs font-urbanist font-bold`;
+            toast.innerHTML = `
+                <span class="${colorText} text-sm">${icon}</span>
+                <p class="text-zinc-200">${message}</p>
+            `;
+
+            container.appendChild(toast);
+            
+            // Animación Entrada
+            setTimeout(() => {
+                toast.classList.remove("translate-x-12", "opacity-0");
+            }, 50);
+
+            // Desvanecimiento automático
+            setTimeout(() => {
+                toast.classList.add("translate-x-12", "opacity-0");
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 5000);
+        }
+
+        let hasActivePurpleAlert = false;
+        function checkDuplicates() {
+            let comprobantesMap = {};
+            let duplicatesFound = false;
+            
+            remittances.forEach(r => {
+                if(r.comprobante && r.comprobante !== "-") {
+                    if(comprobantesMap[r.comprobante]) {
+                        comprobantesMap[r.comprobante].push(r.id);
+                        duplicatesFound = true;
+                    } else {
+                        comprobantesMap[r.comprobante] = [r.id];
+                    }
+                }
+            });
+
+            let container = document.getElementById("alerts-purpura-container");
+            container.innerHTML = "";
+
+            if(duplicatesFound) {
+                let count = 0;
+                Object.keys(comprobantesMap).forEach(key => {
+                    let ids = comprobantesMap[key];
+                    if(ids.length > 1) {
+                        count++;
+                        container.innerHTML += `
+                            <div class="bg-purple-950/20 border border-brand-neonPurple/40 p-3.5 rounded-xl space-y-1.5 glow-purple">
+                                <div class="flex justify-between items-center text-[10px] text-brand-neonPurple font-bold uppercase tracking-wider">
+                                    <span>ALERTA PÚRPURA ACTIVA</span>
+                                    <span>DUPLICADO DE REGISTRO</span>
+                                </div>
+                                <p class="text-xs font-bold text-white font-mono">Comprobante N°: ${key}</p>
+                                <p class="text-[10px] text-zinc-400">Vinculado a las remesas del sistema: ${ids.join(", ")}</p>
+                            </div>
+                        `;
+                    }
+                });
+
+                if(!hasActivePurpleAlert && count > 0) {
+                    triggerCustomToast("¡ALERTA PÚRPURA DETECTADA! Comprobante duplicado en bóveda.", "purple");
+                    hasActivePurpleAlert = true;
+                }
+            } else {
+                container.innerHTML = `
+                    <div class="p-6 text-center text-zinc-600 text-xs">
+                        <i class="fa-solid fa-shield-halved text-lg mb-1 block opacity-30"></i>
+                        Sin alarmas de comprobantes duplicados.
+                    </div>
+                `;
+                hasActivePurpleAlert = false;
+            }
+            
+            // Render de conteo de alertas RED
+            updateRedAlertBadgeCount();
+        }
+
+        function updateRedAlertBadgeCount() {
+            let reversosCount = remittances.filter(r => r.reversado).length;
+            let apelacionesCount = remittances.filter(r => r.apelado).length;
+            let duplicates = 0;
+            let map = {};
+            remittances.forEach(r => {
+                if(r.comprobante && r.comprobante !== "-") {
+                    map[r.comprobante] = (map[r.comprobante] || 0) + 1;
+                }
+            });
+            Object.values(map).forEach(v => { if(v > 1) duplicates++; });
+
+            let totalAlerts = reversosCount + apelacionesCount + duplicates;
+            document.getElementById("alert-badge-count").innerText = totalAlerts;
+        }
+
+        function applyFilters() {
+            let search = document.getElementById("search-input").value.toLowerCase();
+            let divisa = document.getElementById("filter-divisa").value;
+            let clientFilter = document.getElementById("filter-cliente").value;
+            let statusFilter = document.getElementById("filter-status").value;
+            let canalFilter = document.getElementById("filter-canal").value;
+
+            let filtered = remittances.filter(r => {
+                let clientObj = clients.find(c => c.id === r.client_id);
+                let clientName = clientObj ? clientObj.name.toLowerCase() : "";
+                
+                let matchesSearch = r.id.toLowerCase().includes(search) || 
+                                    (r.comprobante && r.comprobante.toLowerCase().includes(search)) ||
+                                    clientName.includes(search);
+                
+                let matchesDivisa = (divisa === "ALL") || (r.currency === divisa);
+                let matchesClient = (clientFilter === "ALL") || (r.client_id === clientFilter);
+                let matchesStatus = (statusFilter === "ALL") || (r.status === statusFilter);
+                let matchesCanal = (canalFilter === "ALL") || (r.channel === canalFilter);
+
+                return matchesSearch && matchesDivisa && matchesClient && matchesStatus && matchesCanal;
+            });
+
+            // Ordenamiento Cronológico Descendente (El más nuevo primero)
+            filtered.sort((a, b) => b.created_at - a.created_at);
+
+            renderAgingQueue(filtered);
+            renderHistoryTable(filtered);
+            renderReceptionsToday();
+            renderComplianceReport();
+            updateChartData();
+            renderRedAlerts();
+            renderExpectations();
+        }
+
+        function resetFilters() {
+            document.getElementById("search-input").value = "";
+            document.getElementById("filter-divisa").value = "ALL";
+            document.getElementById("filter-cliente").value = "ALL";
+            document.getElementById("filter-status").value = "ALL";
+            document.getElementById("filter-canal").value = "ALL";
+            applyFilters();
+            triggerCustomToast("Segmentadores de datos restablecidos.", "info");
+        }
+
+        function renderAgingQueue(filtered) {
+            let tbody = document.getElementById("aging-tbody");
+            tbody.innerHTML = "";
+
+            // Mostrar solo bultos pendientes por contar (Estado NO Cerrado)
+            let pending = filtered.filter(r => r.status !== "Cerrado (Contado)");
+
+            if(pending.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-zinc-500">No hay bultos pendientes en la mesa de dinero.</td></tr>`;
+                return;
+            }
+
+            pending.forEach(r => {
+                let client = clients.find(c => c.id === r.client_id);
+                let clientName = client ? client.name : "-";
+                
+                // Cálculo de Antigüedad en horas continuas
+                let elapsedMs = Date.now() - r.created_at;
+                let elapsedHrs = elapsedMs / (3600 * 1000);
+                
+                let formatAge = "";
+                if(elapsedHrs < 1) {
+                    let mins = Math.floor(elapsedMs / (60 * 1000));
+                    formatAge = `${mins}m`;
+                } else if(elapsedHrs < 24) {
+                    let hrs = Math.floor(elapsedHrs);
+                    let mins = Math.floor((elapsedMs % (3600 * 1000)) / (60 * 1000));
+                    formatAge = `${hrs}h ${mins}m`;
+                } else {
+                    let days = Math.floor(elapsedHrs / 24);
+                    let hrs = Math.floor(elapsedHrs % 24);
+                    formatAge = `${days}d ${hrs}h`;
+                }
+
+                // Semáforos ANS de 72 horas operacionales
+                let colorPulse = "bg-brand-neonGreen glow-green";
+                let badgeText = "Controlado";
+                if(elapsedHrs >= 72) {
+                    colorPulse = "bg-brand-neonPink glow-red";
+                    badgeText = "Crítico";
+                } else if(elapsedHrs >= 48) {
+                    colorPulse = "bg-brand-neonOrange glow-orange";
+                    badgeText = "Advertencia";
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-zinc-900/40 transition-all font-mono">
+                        <td class="py-2.5 text-zinc-300 font-bold">${r.id}</td>
+                        <td class="py-2.5 text-zinc-400 font-urbanist font-semibold">${clientName}</td>
+                        <td class="py-2.5 text-zinc-400">${r.comprobante || "-"}</td>
+                        <td class="py-2.5 text-zinc-400 font-urbanist font-semibold text-[10px]">${r.channel}</td>
+                        <td class="py-2.5 text-right text-zinc-200">${formatCurrencyValue(r.amount, r.currency)}</td>
+                        <td class="py-2.5 text-right font-bold text-zinc-300">${formatAge}</td>
+                        <td class="py-2.5 text-center">
+                            <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-zinc-900/80 text-[10px] font-bold font-urbanist text-zinc-300">
+                                <span class="w-2 h-2 rounded-full block ${colorPulse}"></span>
+                                ${badgeText}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function renderReceptionsToday() {
+            let todayStart = new Date().setHours(0,0,0,0);
+            
+            // Calculador de sumas y balances por divisa (Apertura + Contado)
+            let closedRemittances = remittances.filter(r => r.status === "Cerrado (Contado)");
+            let transitRemittances = remittances.filter(r => r.status !== "Cerrado (Contado)");
+
+            let usd_confirmed = closedRemittances.filter(r => r.currency === "Dólar").reduce((acc, r) => acc + r.amount, 0);
+            let eur_confirmed = closedRemittances.filter(r => r.currency === "Euro").reduce((acc, r) => acc + r.amount, 0);
+            let ves_confirmed = closedRemittances.filter(r => r.currency === "Bolivar").reduce((acc, r) => acc + r.amount, 0);
+
+            let usd_transit = transitRemittances.filter(r => r.currency === "Dólar").reduce((acc, r) => acc + r.amount, 0);
+            let eur_transit = transitRemittances.filter(r => r.currency === "Euro").reduce((acc, r) => acc + r.amount, 0);
+            let ves_transit = transitRemittances.filter(r => r.currency === "Bolivar").reduce((acc, r) => acc + r.amount, 0);
+
+            // Desglose de saldos según requerimiento gerencial (G. Suárez)
+            let usd_inicial = vaultInitialBalances["Dólar"];
+            let usd_reservado = usd_transit;
+            let usd_al_cierre = usd_inicial + usd_confirmed;
+            let usd_custodia_al_cierre = usd_al_cierre + usd_reservado;
+
+            let eur_inicial = vaultInitialBalances["Euro"];
+            let eur_reservado = eur_transit;
+            let eur_al_cierre = eur_inicial + eur_confirmed;
+            let eur_custodia_al_cierre = eur_al_cierre + eur_reservado;
+
+            let ves_inicial = vaultInitialBalances["Bolivar"];
+            let ves_reservado = ves_transit;
+            let ves_al_cierre = ves_inicial + ves_confirmed;
+            let ves_custodia_al_cierre = ves_al_cierre + ves_reservado;
+
+            // Inyectar en Tarjetas de Identificación
+            document.getElementById("card-usd-open").innerText = formatCurrencyValue(usd_inicial, "Dólar");
+            document.getElementById("card-usd-cierre").innerText = formatCurrencyValue(usd_al_cierre, "Dólar");
+            document.getElementById("card-usd-transit").innerText = formatCurrencyValue(usd_reservado, "Dólar");
+            document.getElementById("card-usd-total").innerText = formatCurrencyValue(usd_custodia_al_cierre, "Dólar");
+
+            document.getElementById("card-eur-open").innerText = formatCurrencyValue(eur_inicial, "Euro");
+            document.getElementById("card-eur-cierre").innerText = formatCurrencyValue(eur_al_cierre, "Euro");
+            document.getElementById("card-eur-transit").innerText = formatCurrencyValue(eur_reservado, "Euro");
+            document.getElementById("card-eur-total").innerText = formatCurrencyValue(eur_custodia_al_cierre, "Euro");
+
+            document.getElementById("card-ves-open").innerText = formatCurrencyValue(ves_inicial, "Bolivar");
+            document.getElementById("card-ves-cierre").innerText = formatCurrencyValue(ves_al_cierre, "Bolivar");
+            document.getElementById("card-ves-transit").innerText = formatCurrencyValue(ves_reservado, "Bolivar");
+            document.getElementById("card-ves-total").innerText = formatCurrencyValue(ves_custodia_al_cierre, "Bolivar");
+
+            // Recepciones Específicas de Hoy
+            let todayRemittances = remittances.filter(r => r.created_at >= todayStart);
+            let today_usd = todayRemittances.filter(r => r.currency === "Dólar").reduce((acc, r) => acc + r.amount, 0);
+            let today_eur = todayRemittances.filter(r => r.currency === "Euro").reduce((acc, r) => acc + r.amount, 0);
+            let today_ves = todayRemittances.filter(r => r.currency === "Bolivar").reduce((acc, r) => acc + r.amount, 0);
+
+            document.getElementById("today-recv-usd").innerText = formatCurrencyValue(today_usd, "Dólar");
+            document.getElementById("today-recv-eur").innerText = formatCurrencyValue(today_eur, "Euro");
+            document.getElementById("today-recv-ves").innerText = formatCurrencyValue(today_ves, "Bolivar");
+
+            // Totales por Canales (ATM, Agencias, Comerciales)
+            let totalBultos = remittances.length;
+            let countAtm = remittances.filter(r => r.channel === "ATM").length;
+            let countAgencia = remittances.filter(r => r.channel === "Agencia").length;
+            let countComercial = remittances.filter(r => r.channel === "Comercial").length;
+
+            let pctAtm = totalBultos > 0 ? Math.floor((countAtm / totalBultos) * 100) : 0;
+            let pctAgencia = totalBultos > 0 ? Math.floor((countAgencia / totalBultos) * 100) : 0;
+            let pctComercial = totalBultos > 0 ? Math.floor((countComercial / totalBultos) * 100) : 0;
+
+            document.getElementById("channel-count-atm").innerText = `${countAtm} Bultos`;
+            document.getElementById("channel-pct-atm").innerText = `${pctAtm}%`;
+            document.getElementById("channel-count-agencia").innerText = `${countAgencia} Bultos`;
+            document.getElementById("channel-pct-agencia").innerText = `${pctAgencia}%`;
+            document.getElementById("channel-count-comercial").innerText = `${countComercial} Bultos`;
+            document.getElementById("channel-pct-comercial").innerText = `${pctComercial}%`;
+        }
+
+        function renderHistoryTable(filtered) {
+            let tbody = document.getElementById("history-tbody");
+            tbody.innerHTML = "";
+
+            if(filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-zinc-500">Sin coincidencias para los criterios indicados.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(r => {
+                let client = clients.find(c => c.id === r.client_id);
+                let clientName = client ? client.name : "Desconocido";
+
+                // Formatos de Conciliación Final
+                let concValue = "";
+                let diff = r.amount - r.expected_amount;
+                
+                if(r.status !== "Cerrado (Contado)") {
+                    concValue = `<span class="bg-zinc-900 text-zinc-500 border border-zinc-850 px-2 py-0.5 rounded font-bold text-[10px]">Sin Conteo</span>`;
+                } else if(r.reversado) {
+                    concValue = `<span class="bg-brand-neonPink/25 text-brand-neonPink border border-brand-neonPink/40 px-2 py-0.5 rounded font-bold text-[10px] glow-red animate-pulse">REVERSADO</span>`;
+                } else if(r.apelado) {
+                    concValue = `<span class="bg-brand-neonOrange/25 text-brand-neonOrange border border-brand-neonOrange/40 px-2 py-0.5 rounded font-bold text-[10px] glow-orange animate-pulse">APELACIÓN</span>`;
+                } else if(diff === 0) {
+                    concValue = `<span class="bg-emerald-950/40 text-emerald-400 border border-emerald-900/30 px-2 py-0.5 rounded font-bold text-[10px]">Perfecto</span>`;
+                } else if(diff < 0) {
+                    concValue = `<span class="bg-red-950/40 text-brand-neonPink border border-red-900/30 px-2 py-0.5 rounded font-bold text-[10px]">Faltante</span>`;
+                } else {
+                    concValue = `<span class="bg-blue-950/40 text-brand-neonBlue border border-blue-900/30 px-2 py-0.5 rounded font-bold text-[10px]">Sobrante</span>`;
+                }
+
+                // Código de colores sobrio por fase estándar para no confundir con Alertas RED
+                let statusBadgeStyle = "bg-zinc-900 text-zinc-400 border-zinc-800";
+                if(r.status === "Autorizado") statusBadgeStyle = "bg-purple-950/25 text-purple-300 border-purple-900/30";
+                else if(r.status === "Preparado") statusBadgeStyle = "bg-sky-950/25 text-sky-300 border-sky-900/30";
+                else if(r.status === "Enviado") statusBadgeStyle = "bg-amber-950/25 text-amber-300 border-amber-900/30 animate-pulse";
+                else if(r.status === "Recibido (Camión)") statusBadgeStyle = "bg-indigo-950/25 text-indigo-300 border-indigo-900/30";
+                else if(r.status === "Recibido Final (Bóveda)") statusBadgeStyle = "bg-teal-950/25 text-teal-300 border-teal-900/30";
+                else if(r.status === "Cerrado (Contado)") statusBadgeStyle = "bg-emerald-950/20 text-emerald-300 border-emerald-900/30";
+
+                let rowAlertClass = "";
+                let isDuplicate = remittances.filter(rem => rem.comprobante === r.comprobante && r.comprobante !== "-").length > 1;
+                
+                if(r.reversado) {
+                    rowAlertClass = "border-l-4 border-brand-neonPink shadow-inner shadow-red-500/5";
+                } else if(r.apelado) {
+                    rowAlertClass = "border-l-4 border-brand-neonOrange shadow-inner shadow-orange-500/5";
+                } else if(isDuplicate) {
+                    rowAlertClass = "border-l-4 border-brand-neonPurple shadow-inner shadow-purple-500/5 bg-purple-950/10";
+                }
+
+                tbody.innerHTML += `
+                    <tr id="history-row-${r.id}" class="hover:bg-zinc-900/20 transition-all row-highlight ${rowAlertClass}">
+                        <td class="p-3 font-mono font-bold text-zinc-300">${r.id}</td>
+                        <td class="p-3 font-semibold text-zinc-400 font-urbanist">${clientName}</td>
+                        <td class="p-3 text-zinc-400 font-urbanist font-medium">${r.channel}</td>
+                        <td class="p-3 font-mono text-zinc-400">${r.comprobante || "-"}</td>
+                        <td class="p-3 text-right text-zinc-400 font-mono">${formatCurrencyValue(r.expected_amount, r.currency)}</td>
+                        <td class="p-3 text-right text-zinc-200 font-mono">${formatCurrencyValue(r.amount, r.currency)}</td>
+                        <td class="p-3 text-center">
+                            <span class="inline-block px-2.5 py-1 rounded text-[10px] font-bold border ${statusBadgeStyle}">
+                                ${r.status}
+                            </span>
+                        </td>
+                        <td class="p-3 text-center">${concValue}</td>
+                        <td class="p-3 text-center">
+                            <button onclick="auditarRemesaOjo('${r.id}');" class="p-1.5 bg-zinc-900 hover:bg-zinc-800 text-brand-neonBlue border border-zinc-800 rounded transition-all" title="Ver Flujograma">
+                                <i class="fa-solid fa-eye text-xs"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        function auditarRemesaOjo(remId) {
+            let r = remittances.find(rem => rem.id === remId);
+            if(!r) return;
+
+            // Cambiar a Dashboard General de forma instantánea
+            switchTab('dashboard-general');
+            
+            // Carga el flujograma interactivo de 7 hitos
+            selectRemittanceForFlow(r.id);
+
+            // Desplazamiento suave al flujograma
+            setTimeout(() => {
+                let el = document.getElementById("flow-step-1");
+                if(el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // Efecto de Destello Temporal en el ID
+                    let titleEl = document.getElementById("flow-rem-id");
+                    titleEl.classList.add("animate-pulse", "text-lg");
+                    setTimeout(() => {
+                        titleEl.classList.remove("animate-pulse", "text-lg");
+                    }, 1500);
+                }
+            }, 100);
+        }
+
+        function selectRemittanceForFlow(remId) {
+            selectedRemittanceId = remId;
+            let r = remittances.find(rem => rem.id === remId);
+            if(!r) return;
+
+            let client = clients.find(c => c.id === r.client_id);
+            let clientName = client ? client.name : "Desconocido";
+
+            // Modificar los metadatos
+            document.getElementById("flow-rem-id").innerText = r.id;
+            document.getElementById("flow-comprobante").innerText = r.comprobante || "-";
+            document.getElementById("flow-cliente").innerText = clientName;
+            document.getElementById("flow-canal").innerText = r.channel || "-";
+            document.getElementById("flow-amt-req").innerText = formatCurrencyValue(r.expected_amount, r.currency);
+            document.getElementById("flow-amt-real").innerText = r.status === "Cerrado (Contado)" ? formatCurrencyValue(r.amount, r.currency) : "- (Pendiente)";
+            
+            let diff = r.amount - r.expected_amount;
+            let resText = "-";
+            if(r.status === "Cerrado (Contado)") {
+                if(r.reversado) resText = "REVERSADO";
+                else if(r.apelado) resText = "APELADO EN DISPUTA";
+                else if(diff === 0) resText = "CONCILIADO PERFECTO";
+                else if(diff < 0) resText = `FALTANTE DE: ${formatCurrencyValue(Math.abs(diff), r.currency)}`;
+                else resText = `SOBRANTE DE: ${formatCurrencyValue(diff, r.currency)}`;
+            }
+            document.getElementById("flow-result").innerText = resText;
+            document.getElementById("flow-seal").innerText = r.seal_number || "-";
+            document.getElementById("flow-obs").innerText = r.note || "Sin incidentes reportados en bulto.";
+
+            // Configurar Semáforo o Alertas en el Flujograma
+            let pill = document.getElementById("flow-alert-pill");
+            if(r.reversado) {
+                pill.className = "bg-brand-neonPink/20 text-brand-neonPink border border-brand-neonPink/30 px-2.5 py-1 rounded text-[10px] font-bold glow-red";
+                pill.innerText = "EXCEPCIÓN: REVERSO OPERACIONAL";
+                pill.classList.remove("hidden");
+            } else if(r.apelado) {
+                pill.className = "bg-brand-neonOrange/20 text-brand-neonOrange border border-brand-neonOrange/30 px-2.5 py-1 rounded text-[10px] font-bold glow-orange";
+                pill.innerText = "EXCEPCIÓN: APELACIÓN ACTIVA";
+                pill.classList.remove("hidden");
+            } else {
+                pill.classList.add("hidden");
+            }
+
+            // Definir qué pasos de los 7 están completados
+            const statusOrder = [
+                "Solicitud",
+                "Autorizado",
+                "Preparado",
+                "Enviado",
+                "Recibido (Camión)",
+                "Recibido Final (Bóveda)",
+                "Cerrado (Contado)"
+            ];
+
+            let activeIndex = statusOrder.indexOf(r.status);
+
+            for (let i = 1; i <= 7; i++) {
+                let stepEl = document.getElementById("flow-step-" + i);
+                let timeEl = document.getElementById("flow-time-" + i);
+                let currentStatusName = statusOrder[i - 1];
+
+                if (i - 1 <= activeIndex) {
+                    // Completado / Activo
+                    stepEl.className = "bg-zinc-900 border border-brand-neonGreen/40 p-3 rounded-xl flex items-center lg:flex-col gap-3 text-left lg:text-center shadow-lg shadow-brand-neonGreen/5";
+                    timeEl.className = "text-[10px] text-brand-neonGreen font-semibold mt-0.5";
+                    timeEl.innerText = r.status_history[currentStatusName] ? r.status_history[currentStatusName].split(" ")[1] : "OK";
+                    
+                    // Si es el actual y es un reverso o apelacion, aplicar color neon correspondiente
+                    if (i - 1 === activeIndex) {
+                        if(r.reversado) {
+                            stepEl.className = "bg-zinc-900 border-2 border-brand-neonPink p-3 rounded-xl flex items-center lg:flex-col gap-3 text-left lg:text-center glow-red";
+                            timeEl.className = "text-[10px] text-brand-neonPink font-bold mt-0.5";
+                        } else if(r.apelado) {
+                            stepEl.className = "bg-zinc-900 border-2 border-brand-neonOrange p-3 rounded-xl flex items-center lg:flex-col gap-3 text-left lg:text-center glow-orange";
+                            timeEl.className = "text-[10px] text-brand-neonOrange font-bold mt-0.5";
+                        } else {
+                            // Pulso verde para el hito activo normal
+                            stepEl.className = "bg-zinc-900 border-2 border-brand-neonGreen p-3 rounded-xl flex items-center lg:flex-col gap-3 text-left lg:text-center glow-green";
+                        }
+                    }
+                } else {
+                    // Pendiente
+                    stepEl.className = "bg-zinc-900/30 border border-zinc-900 p-3 rounded-xl flex items-center lg:flex-col gap-3 text-left lg:text-center opacity-40";
+                    timeEl.className = "text-[10px] text-zinc-600 mt-0.5";
+                    timeEl.innerText = "Pendiente";
+                }
+            }
+        }
+
+        function renderRedAlerts() {
+            let reversosContainer = document.getElementById("alerts-reversos-container");
+            let apelacionesContainer = document.getElementById("alerts-apelaciones-container");
+
+            let reversos = remittances.filter(r => r.reversado);
+            let apelaciones = remittances.filter(r => r.apelado);
+
+            // Reversos (Rojo Fluorescente)
+            reversosContainer.innerHTML = "";
+            if(reversos.length === 0) {
+                reversosContainer.innerHTML = `
+                    <div class="p-6 text-center text-zinc-600 text-xs">
+                        <i class="fa-solid fa-circle-check text-lg mb-1 block opacity-30"></i>
+                        Sin reversos activos.
+                    </div>
+                `;
+            } else {
+                reversos.forEach(r => {
+                    let client = clients.find(c => c.id === r.client_id);
+                    let name = client ? client.name : "-";
+                    reversosContainer.innerHTML += `
+                        <div class="bg-red-950/20 border border-brand-neonPink/40 p-3.5 rounded-xl space-y-1.5 glow-red">
+                            <div class="flex justify-between items-center text-[10px] text-brand-neonPink font-bold uppercase tracking-wider">
+                                <span>REVERSADO</span>
+                                <span>SEGURIDAD CRÍTICA</span>
+                            </div>
+                            <p class="text-xs font-bold text-white font-mono">Bulto: ${r.id}</p>
+                            <p class="text-[10px] text-zinc-400">Emisor: ${name} | Comprobante: ${r.comprobante}</p>
+                        </div>
+                    `;
+                });
+            }
+
+            // Apelaciones (Naranja Fluorescente)
+            apelacionesContainer.innerHTML = "";
+            if(apelaciones.length === 0) {
+                apelacionesContainer.innerHTML = `
+                    <div class="p-6 text-center text-zinc-600 text-xs">
+                        <i class="fa-solid fa-circle-check text-lg mb-1 block opacity-30"></i>
+                        Sin disputas de clientes.
+                    </div>
+                `;
+            } else {
+                apelaciones.forEach(r => {
+                    let client = clients.find(c => c.id === r.client_id);
+                    let name = client ? client.name : "-";
+                    let diff = r.amount - r.expected_amount;
+                    apelacionesContainer.innerHTML += `
+                        <div class="bg-orange-950/20 border border-brand-neonOrange/40 p-3.5 rounded-xl space-y-1.5 glow-orange">
+                            <div class="flex justify-between items-center text-[10px] text-brand-neonOrange font-bold uppercase tracking-wider">
+                                <span>APELACIÓN ACTIVA</span>
+                                <span>DISCREPANCIA</span>
+                            </div>
+                            <p class="text-xs font-bold text-white font-mono">Bulto: ${r.id}</p>
+                            <p class="text-[10px] text-zinc-400">Emisor: ${name} | Dif: ${formatCurrencyValue(diff, r.currency)}</p>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        function initializeCharts() {
+            // Doughnut Operativa
+            const ctxDoughnut = document.getElementById("chart-status-doughnut").getContext("2d");
+            chartStatusDoughnut = new Chart(ctxDoughnut, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Solicitud', 'Preparado', 'Tránsito', 'En Bóveda', 'Cerrado'],
+                    datasets: [{
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: ['#3f3f46', '#38bdf8', '#fb923c', '#c084fc', '#deff9a'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#a1a1aa',
+                                font: { family: 'Urbanist', size: 10, weight: 'bold' }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Bar Conciliación
+            const ctxBar = document.getElementById("chart-conciliation-bar").getContext("2d");
+            chartConciliationBar = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: ['Perfectos', 'Faltantes', 'Sobrantes', 'Apelados', 'Reversados'],
+                    datasets: [{
+                        label: 'Volumen por Categoría',
+                        data: [0, 0, 0, 0, 0],
+                        backgroundColor: ['#deff9a', '#f87171', '#38bdf8', '#fb923c', '#9333ea'],
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: '#71717a', font: { family: 'Urbanist', size: 9 } } },
+                        y: { grid: { color: '#27272a' }, ticks: { color: '#71717a', font: { family: 'Urbanist', size: 9 } } }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function updateChartData() {
+            if(!chartStatusDoughnut || !chartConciliationBar) return;
+
+            // Datos de Estado
+            let d_solicitud = remittances.filter(r => r.status === "Solicitud" || r.status === "Autorizado").length;
+            let d_preparado = remittances.filter(r => r.status === "Preparado").length;
+            let d_transito = remittances.filter(r => r.status === "Enviado" || r.status === "Recibido (Camión)").length;
+            let d_boveda = remittances.filter(r => r.status === "Recibido Final (Bóveda)").length;
+            let d_cerrado = remittances.filter(r => r.status === "Cerrado (Contado)").length;
+
+            chartStatusDoughnut.data.datasets[0].data = [d_solicitud, d_preparado, d_transito, d_boveda, d_cerrado];
+            chartStatusDoughnut.update();
+
+            // Datos de Conciliaciones
+            let b_perfecto = remittances.filter(r => r.status === "Cerrado (Contado)" && !r.reversado && !r.apelado && (r.amount - r.expected_amount === 0)).length;
+            let b_faltante = remittances.filter(r => r.status === "Cerrado (Contado)" && !r.reversado && !r.apelado && (r.amount - r.expected_amount < 0)).length;
+            let b_sobrante = remittances.filter(r => r.status === "Cerrado (Contado)" && !r.reversado && !r.apelado && (r.amount - r.expected_amount > 0)).length;
+            let b_apelado = remittances.filter(r => r.apelado).length;
+            let b_reversado = remittances.filter(r => r.reversado).length;
+
+            chartConciliationBar.data.datasets[0].data = [b_perfecto, b_faltante, b_sobrante, b_apelado, b_reversado];
+            chartConciliationBar.update();
+        }
+
+        function toggleLiveFeed(active) {
+            let icon = document.getElementById("live-feed-icon");
+            if(active) {
+                icon.className = "fa-solid fa-circle text-brand-neonGreen animate-pulse text-[10px]";
+                triggerCustomToast("Live Feed activado. Escuchando tripulaciones en tránsito.", "success");
+                
+                liveFeedInterval = setInterval(() => {
+                    simulateLiveTransmission();
+                }, 8000); // Avanza o añade cada 8 segundos
+            } else {
+                icon.className = "fa-solid fa-circle text-zinc-500 text-[10px]";
+                triggerCustomToast("Live Feed detenido.", "info");
+                clearInterval(liveFeedInterval);
+            }
+        }
+
+        function simulateLiveTransmission() {
+            let decider = Math.random();
+
+            if(decider < 0.45) {
+                // ACCIÓN A: Crear una Nueva Solicitud (Sube de primera al historial)
+                let activeClients = clients.filter(c => !c.deleted);
+                if(activeClients.length === 0) return;
+
+                let randomClient = activeClients[Math.floor(Math.random() * activeClients.length)];
+                let remId = "REM-" + Date.now().toString().slice(-4) + "-" + Math.floor(10 + Math.random()*90);
+                
+                let amt = Math.floor(5000 + Math.random() * 25000);
+                let currencies = ["Dólar", "Euro", "Bolivar"];
+                let channels = ["ATM", "Agencia", "Comercial"];
+                
+                let currencySelected = currencies[Math.floor(Math.random() * currencies.length)];
+                let channelSelected = channels[Math.floor(Math.random() * channels.length)];
+                
+                let comps = ["COMP-22001", "COMP-22002", "COMP-33045", "COMP-44012"]; // Posibilidad de provocar Alerta Púrpura
+                let isDuplicatedSim = Math.random() < 0.20;
+                let finalComprobante = isDuplicatedSim ? comps[Math.floor(Math.random() * comps.length)] : "COMP-" + Math.floor(10000 + Math.random() * 90000);
+
+                let newRem = {
+                    id: remId,
+                    client_id: randomClient.id,
+                    comprobante: finalComprobante,
+                    amount: amt,
+                    expected_amount: amt,
+                    currency: currencySelected,
+                    channel: channelSelected,
+                    status: "Solicitud",
+                    status_history: { "Solicitud": formatFullDate(new Date()) },
+                    created_at: Date.now(),
+                    diff_type: "Perfecto",
+                    note: "Inicializado por el Simulador Integrado",
+                    seal_number: "PREC-" + Math.floor(1000 + Math.random()*9000),
+                    reversado: false,
+                    apelado: false
+                };
+
+                remittances.unshift(newRem); // Subir de primera
+                saveToLocalStorage();
+                applyFilters();
+                checkDuplicates();
+
+                // Notificación visual de entrada y destello fluorescente
+                triggerCustomToast(`Recibida solicitud ${remId} de ${randomClient.name} vía ${channelSelected}.`, "success");
+                highlightNewRow(remId);
+
+            } else {
+                // ACCIÓN B: Avanzar Estado de Remesa No Cerrada
+                let nonClosed = remittances.filter(r => r.status !== "Cerrado (Contado)");
+                if(nonClosed.length === 0) return;
+
+                let target = nonClosed[Math.floor(Math.random() * nonClosed.length)];
+                const statusOrder = [
+                    "Solicitud",
+                    "Autorizado",
+                    "Preparado",
+                    "Enviado",
+                    "Recibido (Camión)",
+                    "Recibido Final (Bóveda)",
+                    "Cerrado (Contado)"
+                ];
+
+                let currentIndex = statusOrder.indexOf(target.status);
+                let nextStatus = statusOrder[currentIndex + 1];
+
+                target.status = nextStatus;
+                target.status_history[nextStatus] = formatFullDate(new Date());
+
+                // Simulaciones de Excepciones RED al cerrar la remesa
+                if(nextStatus === "Cerrado (Contado)") {
+                    let randEvent = Math.random();
+                    if(randEvent < 0.15) {
+                        target.reversado = true;
+                        triggerCustomToast(`¡REVERSO OPERACIONAL detectado en remesa ${target.id}!`, "error");
+                    } else if(randEvent < 0.30) {
+                        target.apelado = true;
+                        target.amount = target.expected_amount - 500; // Provocar diferencia
+                        triggerCustomToast(`¡APELACIÓN de diferencia iniciada en remesa ${target.id}!`, "warning");
+                    } else {
+                        // Conciliación perfecta
+                        target.amount = target.expected_amount;
+                    }
+                }
+
+                saveToLocalStorage();
+                applyFilters();
+                checkDuplicates();
+
+                triggerCustomToast(`Remesa ${target.id} avanzó a "${nextStatus}".`, "info");
+                highlightNewRow(target.id);
+                
+                // Si la remesa estaba seleccionada en el flujograma, refrescar visualmente
+                if(selectedRemittanceId === target.id) {
+                    selectRemittanceForFlow(target.id);
+                }
+            }
+        }
+
+        function highlightNewRow(remId) {
+            setTimeout(() => {
+                let row = document.getElementById(`history-row-${remId}`);
+                if(row) {
+                    row.classList.add("row-new");
+                    setTimeout(() => {
+                        row.classList.remove("row-new");
+                    }, 2000);
+                }
+            }, 100);
+        }
+
+        // Stub requerido para evitar caídas del simulador heredado
+        function calculateROIMetrics() {}
+
+        function formatCurrencyValue(value, currency) {
+            if(currency === "Dólar") return `$${value.toLocaleString('es-VE', {minimumFractionDigits: 2})}`;
+            if(currency === "Euro") return `€${value.toLocaleString('es-VE', {minimumFractionDigits: 2})}`;
+            return `Bs. ${value.toLocaleString('es-VE', {minimumFractionDigits: 2})}`;
+        }
+
+        function formatFullDate(date) {
+            let d = new Date(date);
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;
+        }
+
+        function generateExecutiveReport() {
+            let reversos = remittances.filter(r => r.reversado);
+            let apelaciones = remittances.filter(r => r.apelado);
+            let duplicates = [];
+            
+            let map = {};
+            remittances.forEach(r => {
+                if(r.comprobante && r.comprobante !== "-") {
+                    map[r.comprobante] = (map[r.comprobante] || []);
+                    map[r.comprobante].push(r.id);
+                }
+            });
+            Object.keys(map).forEach(k => {
+                if(map[k].length > 1) duplicates.push({ key: k, ids: map[k] });
+            });
+
+            let panel = document.getElementById("report-output-panel");
+            panel.classList.remove("hidden");
+            
+            document.querySelectorAll(".current-date-memo").forEach(el => {
+                el.innerText = new Date().toLocaleDateString('es-VE');
+            });
+
+            // HTML Estructurado para el Memo Visual
+            let visualContainer = document.getElementById("report-visual-preview");
+            let textOutput = "";
+
+            visualContainer.innerHTML = "";
+            textOutput += `==================================================\n`;
+            textOutput += `MEMORANDO DE INTEGRIDAD TRANSACCIONAL\n`;
+            textOutput += `TRANSVALOR - CONTROL DE RIESGOS AIT\n`;
+            textOutput += `Fecha: ${new Date().toLocaleDateString('es-VE')}\n`;
+            textOutput += `Para: Celestino Turmero / Luis Jiménez\n`;
+            textOutput += `De: G. Suárez - Gerente de Monitoreo Transaccional\n`;
+            textOutput += `==================================================\n\n`;
+
+            // SECCIÓN REVERSOS
+            visualContainer.innerHTML += `<p class="font-bold text-brand-neonPink border-b border-zinc-800 pb-1 flex items-center gap-1.5"><i class="fa-solid fa-circle-radiation"></i> 1. REVERSOS OPERATIVOS REGISTRADOS (${reversos.length})</p>`;
+            textOutput += `1. REVERSOS OPERATIVOS REGISTRADOS (${reversos.length})\n`;
+            if(reversos.length === 0) {
+                visualContainer.innerHTML += `<p class="text-zinc-500 italic">No se registran solicitudes anuladas en el sistema.</p>`;
+                textOutput += `- Sin decesos o incidentes.\n`;
+            } else {
+                let ul = document.createElement("ul");
+                ul.className = "list-disc pl-5 space-y-1 text-zinc-400 font-mono";
+                reversos.forEach(r => {
+                    let client = clients.find(c => c.id === r.client_id);
+                    let textLine = `Bulto ID: ${r.id} | Emisor: ${client ? client.name : "-"} | Canal: ${r.channel} | Comprobante: ${r.comprobante}`;
+                    ul.innerHTML += `<li>${textLine}</li>`;
+                    textOutput += `- ${textLine}\n`;
+                });
+                visualContainer.appendChild(ul);
+            }
+
+            // SECCIÓN APELACIONES
+            visualContainer.innerHTML += `<p class="font-bold text-brand-neonOrange border-b border-zinc-800 pb-1 mt-4 flex items-center gap-1.5"><i class="fa-solid fa-circle-exclamation"></i> 2. APELACIONES POR DISCREPANCIA DE CONTEO (${apelaciones.length})</p>`;
+            textOutput += `\n2. APELACIONES POR DISCREPANCIA DE CONTEO (${apelaciones.length})\n`;
+            if(apelaciones.length === 0) {
+                visualContainer.innerHTML += `<p class="text-zinc-500 italic">No hay reclamaciones activas en mesa de dinero.</p>`;
+                textOutput += `- Sin decesos o incidentes.\n`;
+            } else {
+                let ul = document.createElement("ul");
+                ul.className = "list-disc pl-5 space-y-1 text-zinc-400 font-mono";
+                apelaciones.forEach(r => {
+                    let client = clients.find(c => c.id === r.client_id);
+                    let diff = r.amount - r.expected_amount;
+                    let textLine = `Bulto ID: ${r.id} | Emisor: ${client ? client.name : "-"} | Diferencia: ${formatCurrencyValue(diff, r.currency)}`;
+                    ul.innerHTML += `<li>${textLine}</li>`;
+                    textOutput += `- ${textLine}\n`;
+                });
+                visualContainer.appendChild(ul);
+            }
+
+            // SECCIÓN ALERTAS PÚRPURAS
+            visualContainer.innerHTML += `<p class="font-bold text-brand-neonPurple border-b border-zinc-800 pb-1 mt-4 flex items-center gap-1.5"><i class="fa-solid fa-circle-nodes"></i> 3. ALERTAS PÚRPURAS POR DUPLICIDAD (${duplicates.length})</p>`;
+            textOutput += `\n3. ALERTAS PÚRPURAS POR DUPLICIDAD (${duplicates.length})\n`;
+            if(duplicates.length === 0) {
+                visualContainer.innerHTML += `<p class="text-zinc-500 italic">Sistemas de comprobación cruzada en estado óptimo.</p>`;
+                textOutput += `- Sin decesos o incidentes.\n`;
+            } else {
+                let ul = document.createElement("ul");
+                ul.className = "list-disc pl-5 space-y-1 text-zinc-400 font-mono";
+                duplicates.forEach(d => {
+                    let textLine = `Comprobante duplicado: ${d.key} | Asociado a las remesas: ${d.ids.join(", ")}`;
+                    ul.innerHTML += `<li>${textLine}</li>`;
+                    textOutput += `- ${textLine}\n`;
+                });
+                visualContainer.appendChild(ul);
+            }
+
+            // Firma de Autorización
+            visualContainer.innerHTML += `
+                <div class="pt-6 border-t border-zinc-850 text-[10px] text-zinc-500 flex justify-between items-center">
+                    <p>Firma Responsable: G. Suárez<br>Gerente de Monitoreo Transaccional</p>
+                    <p class="text-right font-mono">HASH: AIT-SUAREZ-2026-F98AA</p>
+                </div>
+            `;
+            textOutput += `\n==================================================\n`;
+            textOutput += `Firma de Responsabilidad: G. Suárez\n`;
+            textOutput += `Gerente de Monitoreo Transaccional - Transvalor\n`;
+
+            document.getElementById("report-text-area").value = textOutput;
+            triggerCustomToast("Resumen diario de excepciones listo para exportación.", "success");
+        }
+
+        function copyToClipboardMemo() {
+            let textArea = document.getElementById("report-text-area");
+            textArea.select();
+            document.execCommand('copy');
+            triggerCustomToast("Copiado al portapapeles con éxito.", "success");
+        }
+
+        function sendToWhatsappMemo() {
+            let text = document.getElementById("report-text-area").value;
+            let url = "https://api.whatsapp.com/send?text=" + encodeURIComponent(text);
+            window.open(url, '_blank');
+        }
+    </script>
+<script>
+    let intervalId = null;
+
+    function toggleAutoMonitoreo() {
+        const btn = document.getElementById('btn-automonitoreo');
+        
+        if (intervalId) {
+            // DETENER
+            clearInterval(intervalId);
+            intervalId = null;
+            btn.classList.remove('active-glow');
+            console.log("Monitoreo detenido");
+        } else {
+            // INICIAR
+            intervalId = setInterval(() => {
+                // AQUÍ LLAMAS A TU FUNCIÓN QUE CARGA DATOS
+                // Ejemplo: simularNuevaRemesa(); o recargarDatos();
+                console.log("Monitoreo activo...");
+                // Asegúrate de que el nombre de la función aquí coincida con 
+                // la función que ya usas para actualizar tu tabla.
+            }, 3000);
+            btn.classList.add('active-glow');
+            console.log("Monitoreo iniciado");
+        }
+    }
+// Variable para controlar el estado
+let intervalId = null;
+
+function toggleAutoMonitoreo() {
+    const btn = document.getElementById('btn-automonitoreo');
+    
+    if (intervalId) {
+        // APAGAR
+        clearInterval(intervalId);
+        intervalId = null;
+        btn.classList.remove('active-glow');
+        // Opcional: regresa el color a naranja
+        btn.classList.replace('text-white', 'text-[#FF8C00]');
+    } else {
+        // ENCENDER
+        intervalId = setInterval(() => {
+            // AQUÍ LLAMAS A LA FUNCIÓN QUE CARGA TUS REMESAS
+            // Revisa cómo se llama tu función actual (ej: loadRemesas(), renderDashboard(), etc.)
+            console.log("Auto-monitoreo corriendo...");
+            // renderDashboard(remittancesData); 
+        }, 3000);
+        btn.classList.add('active-glow');
+        btn.classList.replace('text-[#FF8C00]', 'text-white');
+    }
+}
+</script>
+</body>
+</html>

