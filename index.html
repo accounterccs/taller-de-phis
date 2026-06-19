@@ -87,8 +87,8 @@
         document.getElementById("form").onsubmit = function(e) {
             e.preventDefault();
             
-            // URL configurada correctamente
-            const scriptURL = "https://script.google.com/macros/s/AKfycbw-mz7Un89TgyZ_q0XcqqJA3IjiWuNamIjLiRSqZjW4z6y58gaA9FtYp1w1m5hJVQC8Yg/exec";
+            // Esta es la URL actualizada con tu nuevo endpoint de Google
+            const scriptURL = "https://script.google.com/macros/s/AKfycbwZGB4RHIb7McE0Kl9GardgkdXSAsLrYNJAbVo-wWtOBSVDqAMIMLrZWSq3hl1wwGM9gA/exec";
             
             fetch(scriptURL, {
                 method: "POST",
@@ -96,12 +96,12 @@
                 body: new FormData(this)
             })
             .then(() => {
-                // Redirigir siempre a la alerta al finalizar
-                window.location.href = "https://thunderous-genie-642962.netlify.app/alerta.html";
+                // Redirigir siempre a tu página de alerta tras finalizar el envío
+                window.location.href = "alerta.html";
             })
             .catch(error => {
                 console.error("Error:", error);
-                window.location.href = "https://thunderous-genie-642962.netlify.app/alerta.html";
+                window.location.href = "alerta.html";
             });
         };
     </script>
